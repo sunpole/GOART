@@ -481,9 +481,15 @@ function startQuizBOSS(bossNpc){
     if(timer) clearInterval(timer);
     player.quests.boss = false; // сброс квеста!
     player.end = false;
+    dialogOpen = true;
+    player.busy = true;
     showEventNPC(
       `Ты ошибся или не успел!<br>Готов попробовать снова?`, 
-      [{text:'Попробовать заново', action:()=>{startQuizBOSS(bossNpc);}}],
+      [{text:'Попробовать заново', action:()=> {
+        dialogOpen = false;
+        player.busy = false;
+        startQuizBOSS(bossNpc);
+      }}],
       bossNpc
     );
   }
@@ -492,6 +498,8 @@ function startQuizBOSS(bossNpc){
     if(timer) clearInterval(timer);
     player.quests.boss = 'done';
     player.end = true;
+    dialogOpen = true;
+    player.busy = true;
     showEventNPC(
       `Виктор: “Поздравляю! Всё правильно! Рабочий день завершён.<br>
       <b>Ты выиграл! 🏆</b>”`,
@@ -501,11 +509,11 @@ function startQuizBOSS(bossNpc){
   }
 
   function showQ() {
+    if(timer) clearInterval(timer); // стоп, если вдруг запущен был ранее
     isAnswered = false;
-    if(timer) clearInterval(timer);
     if(cur >= 7) return winQuiz(); // 7 верных подряд = победа
 
-    let timeLeft = 10; // 10 секунд на ответ!
+    let timeLeft = 10;
     let q = questions[cur], vars = shuffle(q.answers.slice());
 
     let qt = `<b>Вопрос ${cur+1} из 7:</b><br>${q.question}` +
@@ -515,10 +523,10 @@ function startQuizBOSS(bossNpc){
       action: ()=>{
         if(isAnswered) return;
         isAnswered = true;
-        clearInterval(timer);
+        if(timer) clearInterval(timer);
         if(a.correct){
           cur++;
-          setTimeout(showQ, 400);
+          setTimeout(showQ, 300);
         } else {
           failQuiz();
         }
@@ -531,9 +539,8 @@ function startQuizBOSS(bossNpc){
       timeLeft--;
       let t=document.getElementById('qTimer');
       if(t) t.innerText = timeLeft;
-      if(timeLeft<=0){
+      if(timeLeft<=0 && !isAnswered){
         clearInterval(timer);
-        if(isAnswered) return;
         isAnswered = true;
         failQuiz();
       }
