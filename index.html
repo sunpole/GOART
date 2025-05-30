@@ -49,6 +49,22 @@
       box-shadow: 0 0 22px #046eb7a6; display:none; min-width: 265px; min-height:60px;
       z-index:4;
     }
+    #eventPortrait {
+      text-align:center;
+      margin:0 0 12px 0;
+    }
+    #eventPortrait img {
+      max-width:130px;
+      max-height:130px;
+      border-radius: 16px;
+      box-shadow: 0 2px 18px #4689ff27;
+      object-fit:cover;
+      margin:auto;
+      display:inline-block;
+    }
+    @media (max-width:500px) {
+      #eventPortrait img {max-width:86px;max-height:86px;}
+    }
     #questlog { margin:9px 0 0 0; font-size:14px; color:#305;}
     #player-name {font-size:20px; font-weight:500;}
     #restartBtn {padding:7px 26px;background:#59c265; color:#fff; border:none; border-radius:7px; font-size:16px; margin:0 0 0 20px;}
@@ -86,6 +102,7 @@
   </div>
   <div id="control-panel"></div>
   <div id="eventBox">
+    <div id="eventPortrait"></div>
     <div id="eventText"></div>
     <div id="eventOptions"></div>
   </div>
