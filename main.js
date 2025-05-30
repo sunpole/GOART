@@ -23,7 +23,7 @@ const NPCS_FULL = [
     desc:'Клиентский менеджер. Молодая, с телефоном, аккуратна, всегда просит сделать цветопробу. Если не сделал — будет ходить за тобой.',  
     type:'kvest',home:[0,1],follow:false,  
     dialog1:"Катя: Ау, ну сделай цветопробу.", prob1:60,  
-    dialog2:"Катя: ты что забыл про цветопробу?.", prob2:30,  
+    dialog2:"Катя: Ты что забыл про цветопробу?.", prob2:30,  
     dialog3:"Катя: Ау, бой - шарься без чила на цифряк и шекай мне цветку по фасту!!!.", prob3:10  
   },  
   {  
@@ -264,8 +264,8 @@ function checkEvents(){
     player.busy=true;  
     showEventNPC(randDialog(sv),  
     [  
-      {text:'Хорошо, мы попробуем',action:()=>{sv.said=true;player.busy=false;}},  
-      {text:'Нет',action:()=>{sv.said=false;checkEvents();}}  
+      {text:'Хорошо, мы попробуем вам помочь',action:()=>{sv.said=true;player.busy=false;}},  
+      {text:'Нет, я не буду, идите к Виктору!',action:()=>{sv.said=false;checkEvents();}}  
     ],sv);  
     return;  
   }  
