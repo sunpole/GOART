@@ -207,51 +207,70 @@ function renderControls(){
   document.getElementById('control-panel').innerHTML = html;  
 }
 
+
+
 // ========= ОСНОВНОЙ ЦИКЛ ==========
 let nlooper = null;
 function stopLoop(){
   if(nlooper) clearInterval(nlooper); nlooper=null;
 }
+
+// -------- ФУНКЦИЯ: выгнать NPC из комнаты Марины --------
+// ========= простраснтво марины ==========
+function kickNpcsFromRoom(roomIdx) {
+  npcs.forEach(npc => {
+    if (
+      npc.name !== 'Марина' &&
+      npc.at === roomIdx
+    ) {
+      // Найти куда уйти: в любую свою доступную комнату, где Марина НЕ находится и где мест < 3
+      const freeHomes = npc.home.filter(idx =>
+        idx !== roomIdx &&
+        npcs.filter(n => n.at === idx && n.name !== 'Марина').length < 3 && // не переполнено
+        npcs.find(n => n.at === idx && n.name === 'Марина') == null // там нет Марины
+      );
+      if(freeHomes.length) npc.at = freeHomes[Math.floor(Math.random()*freeHomes.length)];
+      // Если совсем некуда идти, пусть приходит в комнату, но это маловероятно (зависит от структуры home)
+    }
+  });
+}
+
 function startLoop(){
   stopLoop();
   nlooper = setInterval(()=>{
     if(player.end || dialogOpen) return;
 
     npcs.forEach(npc => {
-      // Квестовый: если follow и к игроку – только если не overcrowded
-      if (npc.type === 'kvest') {
-        if (npc.follow && player.quests.proba != 'done') {
-          const npcsHere = npcs.filter(n => n.at === player.at && n !== npc).length;
-          if (npcsHere + 1 <= 3) npc.at = player.at;
-          // если нельзя – остаётся на месте
-        } else {
-          // Рандом по списку home, ONLY если не overcrowded
-          const shuffled = shuffle(npc.home);
-          let moved = false;
-          for (let i = 0; i < shuffled.length; i++) {
-            const roomIdx = shuffled[i];
-            const npcsHere = npcs.filter(n => n.at === roomIdx && n !== npc).length;
-            if (npcsHere + 1 <= 3) {
-              npc.at = roomIdx;
-              moved = true;
-              break;
-            }
-          }
-          // если нигде не удалось – стоит на месте
-        }
-      }
-      // Обычный NPC, есть список home? 70% шанс “дернуться”
-      else if (npc.home && Math.random() < 0.7) {
+      // ---------- МАРИНА: особое поведение ----------
+      if (npc.name === 'Марина') {
+        const oldAt = npc.at;
         const shuffled = shuffle(npc.home);
         for (let i = 0; i < shuffled.length; i++) {
           const roomIdx = shuffled[i];
-          const npcsHere = npcs.filter(n => n.at === roomIdx && n !== npc).length;
+          const npcsHere = npcs.filter(n => n.at === roomIdx && n.name !== 'Марина').length;
+          if (npcsHere < 3) {
+            npc.at = roomIdx;
+            break;
+          }
+        }
+        if (npc.at !== oldAt) {
+          kickNpcsFromRoom(npc.at);
+        }
+        return; // обработали Марину
+      }
+      // ---------- Остальные NPC избегают Марину ----------
+      if (npc.home && Math.random() < 0.7) {
+        const shuffled = shuffle(npc.home);
+        for (let i = 0; i < shuffled.length; i++) {
+          const roomIdx = shuffled[i];
+          // Если в этой комнате есть Марина — пропускаем её!
+          if (npcs.find(n => n.at === roomIdx && n.name === 'Марина')) continue;
+          const npcsHere = npcs.filter(n => n.at === roomIdx && n !== npc && n.name !== 'Марина').length;
           if (npcsHere + 1 <= 3) {
             npc.at = roomIdx;
             break;
           }
         }
-        // иначе – остался тут же
       }
     });
 
@@ -263,6 +282,8 @@ function startLoop(){
     checkEvents();
   }, 1800);
 }
+
+
 // ============= ЛОГИКА ПЕРЕМЕЩЕНИЯ ==========  
 function moveTo(idx){
   // Считаем NPC в этой комнате
@@ -325,8 +346,15 @@ if(player.at==mar.at) {
       mar
     );
   } else {
+    // Было:
+    // showEventNPC(
+    //   "Марина: У тебя ничего нет — ну и ладно, всё равно уйди!",
+    //   [{text:'Ок',action:()=>{}}],
+    //   mar
+    // );
+    // Стало:
     showEventNPC(
-      "Марина: У тебя ничего нет — ну и ладно, всё равно уйди!",
+      randDialog(mar) + "<br>У тебя ничего нет, иди!",
       [{text:'Ок',action:()=>{}}],
       mar
     );
