@@ -188,9 +188,16 @@ function renderQuests(){
 function renderControls(){  
   let html = '';  
   let here = player.at, doors = ROOMS[here].doors;  
-  doors.forEach(idx=>{  
-    html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;  
-  });  
+  doors.forEach(idx=>{
+    // Считаем NPC в целевой комнате
+    const npcsHere = npcs.filter(n => n.at === idx).length;
+    // Если там уже 3 или более - кнопка неактивна
+    if(npcsHere + 1 > 3){
+      html += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;  
+    } else {
+      html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;  
+    }
+  });
   if(ROOMS[here].name==='Аквариум'&&!player.inventory.includes('цветопроба')&&player.quests.proba==='inprogress'){  
     html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;  
   }  
@@ -198,41 +205,77 @@ function renderControls(){
     html += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;  
   }  
   document.getElementById('control-panel').innerHTML = html;  
-}  
+}
 
-// ========= ОСНОВНОЙ ЦИКЛ ==========  
-let nlooper = null;  
-function stopLoop(){  
-  if(nlooper)clearInterval(nlooper); nlooper=null;  
-}  
-function startLoop(){  
-  stopLoop();  
-  nlooper = setInterval(()=>{  
-    if(player.end || dialogOpen) return;  
-    npcs.forEach(npc=>{  
-      if(npc.type==='kvest'){  
-        if(npc.follow && player.quests.proba!='done') npc.at = player.at;  
-        else npc.at=npc.home[Math.floor(Math.random()*npc.home.length)];  
-      }  
-      else if(npc.home && Math.random()<0.7) {  
-        npc.at=npc.home[Math.floor(Math.random()*npc.home.length)];  
-      }  
-    });  
-    if(player.stress>=100){  
-      player.end=true;  
-      showEvent('Вы сгорели от стресса! 👎',[{text:'Начать заново',action:resetGame}]);  
-    }  
-    renderAll();  
-    checkEvents();  
-  }, 1800);  
-}  
+// ========= ОСНОВНОЙ ЦИКЛ ==========
+let nlooper = null;
+function stopLoop(){
+  if(nlooper) clearInterval(nlooper); nlooper=null;
+}
+function startLoop(){
+  stopLoop();
+  nlooper = setInterval(()=>{
+    if(player.end || dialogOpen) return;
 
+    npcs.forEach(npc => {
+      // Квестовый: если follow и к игроку – только если не overcrowded
+      if (npc.type === 'kvest') {
+        if (npc.follow && player.quests.proba != 'done') {
+          const npcsHere = npcs.filter(n => n.at === player.at && n !== npc).length;
+          if (npcsHere + 1 <= 3) npc.at = player.at;
+          // если нельзя – остаётся на месте
+        } else {
+          // Рандом по списку home, ONLY если не overcrowded
+          const shuffled = shuffle(npc.home);
+          let moved = false;
+          for (let i = 0; i < shuffled.length; i++) {
+            const roomIdx = shuffled[i];
+            const npcsHere = npcs.filter(n => n.at === roomIdx && n !== npc).length;
+            if (npcsHere + 1 <= 3) {
+              npc.at = roomIdx;
+              moved = true;
+              break;
+            }
+          }
+          // если нигде не удалось – стоит на месте
+        }
+      }
+      // Обычный NPC, есть список home? 70% шанс “дернуться”
+      else if (npc.home && Math.random() < 0.7) {
+        const shuffled = shuffle(npc.home);
+        for (let i = 0; i < shuffled.length; i++) {
+          const roomIdx = shuffled[i];
+          const npcsHere = npcs.filter(n => n.at === roomIdx && n !== npc).length;
+          if (npcsHere + 1 <= 3) {
+            npc.at = roomIdx;
+            break;
+          }
+        }
+        // иначе – остался тут же
+      }
+    });
+
+    if(player.stress>=100){
+      player.end=true;
+      showEvent('Вы сгорели от стресса! 👎',[{text:'Начать заново',action:resetGame}]);
+    }
+    renderAll();
+    checkEvents();
+  }, 1800);
+}
 // ============= ЛОГИКА ПЕРЕМЕЩЕНИЯ ==========  
-function moveTo(idx){  
-  player.at = idx;  
-  renderAll();  
-  checkEvents();  
-}  
+function moveTo(idx){
+  // Считаем NPC в этой комнате
+  const npcsHere = npcs.filter(n => n.at === idx).length;
+  // “Людей” будет npcsHere + игрок (если переместится)
+  if (npcsHere + 1 > 3) {
+    showEvent('В комнате уже максимальное количество людей (3). Подожди, пока кто-то выйдет!', [{text: 'OK', action: ()=>{}}]);
+    return;
+  }
+  player.at = idx;
+  renderAll();
+  checkEvents();
+}
 
 // --------- ДЕЙСТВИЯ В КОМНАТАХ -----------  
 function makeProba(){  
