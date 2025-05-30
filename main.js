@@ -1,289 +1,504 @@
-/*============= КАРТА ЛОКАЦИЙ (связи) =============*/
-const ROOMS = [
-  // 0-3 1 этаж, 4-7 1 этаж, 8-11 2 этаж, 12 3 этаж
-  {name:'Офис', icon:'🏢', doors:[1,4], desc:'Здесь работают специалисты по клиентам и бывают допечатники.'},
-  {name:'Коридор', icon:'🚪', doors:[0,2,5], desc:'Здесь все проходят из офиса в аквариум.'},
-  {name:'Склад 1 эт', icon:'📦', doors:[1,3,6], desc:'Место для расходников и паллет.'},
-  {name:'ПР. цех дверь', icon:'🚧', doors:[2,7], desc:'Проход на производство.'},
-  {name:'Аквариум', icon:'🖨', doors:[0,5,8], desc:'Цифровая печать, тут толпа цифровиков.'},
-  {name:'Коридор 2', icon:'⬅️', doors:[1,4,6], desc:'Проход между аквариумом и складом.'},
-  {name:'Дверь на 2 эт', icon:'⬆️', doors:[2,5,9], desc:'Лестница на второй этаж.'},
-  {name:'Проход в произв.', icon:'🚧', doors:[3,6,10], desc:'Вход на большой цех.'},
-  {name:'Производство',icon:'🏭',doors:[4,9,11], desc:'Шумный зал с машинами, коробки, пакеты, полки.'},
-  {name:'Лак',icon:'💧',doors:[6,8,12], desc:'Лакировка, Антон частенько тут.'},
-  {name:'Паллеты',icon:'🪵',doors:[7,8,11], desc:'Завалено коробками.'},
-  {name:'Склад 2 эт',icon:'📦',doors:[8,10], desc:'Все запасы и расходники.'},
-  {name:'Кабинет босса',icon:'👔',doors:[9], desc:'Офис Виторга. Доступен только после всех дел.'}
-];
+// ============= КАРТА ЛОКАЦИЙ =============  
+const ROOMS = [  
+  {name:'Офис', icon:'🏢', doors:[1,4], desc:'Здесь работают специалисты по клиентам и бывают допечатники.'},  
+  {name:'Коридор', icon:'🚪', doors:[0,2,5], desc:'Здесь все проходят из офиса в аквариум.'},  
+  {name:'Склад 1 эт', icon:'📦', doors:[1,3,6], desc:'Место для расходников и паллет.'},  
+  {name:'ПР. цех дверь', icon:'🚧', doors:[2,7], desc:'Проход на производство.'},  
+  {name:'Аквариум', icon:'🖨', doors:[0,5,8], desc:'Цифровая печать, тут толпа цифровиков.'},  
+  {name:'Коридор 2', icon:'⬅️', doors:[1,4,6], desc:'Проход между аквариумом и складом.'},  
+  {name:'Дверь на 2 эт', icon:'⬆️', doors:[2,5,9], desc:'Лестница на второй этаж.'},  
+  {name:'Проход в произв.', icon:'🚧', doors:[3,6,10], desc:'Вход на большой цех.'},  
+  {name:'Производство',icon:'🏭',doors:[4,9,11], desc:'Шумный зал с машинами, коробки, пакеты, полки.'},  
+  {name:'Лак',icon:'💧',doors:[6,8,12], desc:'Лакировка, Антон частенько тут.'},  
+  {name:'Паллеты',icon:'🪵',doors:[7,8,11], desc:'Завалено коробками.'},  
+  {name:'Склад 2 эт',icon:'📦',doors:[8,10], desc:'Все запасы и расходники.'},  
+  {name:'Кабинет босса',icon:'👔',doors:[9], desc:'Офис Виктора. Доступен только после всех дел.'}  
+];  
 
-/*============= NPC: имя, иконка, описание, зона =============*/
-const NPCS_FULL = [
-  // Офис/коридор/клиенты
-  {name:'Катя',icon:'👩‍🦰',desc:'Клиентский менеджер. Молодая, с телефоном, аккуратна, всегда просит сделать цветопробу. Если не сделал — будет ходить за тобой.', type:'kvest', home:[0,1], follow:false},
-  {name:'Светлана',icon:'👩🏼‍🦱',desc:'Взрослая болтушка, любит задержать у двери длинным разговором. Уйдет только если согласиться.', type:'barrier', home:[0,1], said:false},
-  {name:'Владимир',icon:'🧔',desc:'Новый, просто интересуется, что тут делают. Не мешает работе.', type:'neutral', home:[0,1,2]},
-  // Допечатники
-  {name:'Сергей Ас',icon:'👨‍🦳',desc:'Старший допечатник, ворчит по делу о макетах и метках.',type:'tip',home:[2,1]},
-  {name:'Саша Ха',icon:'👱🏻‍♂️',desc:'Позитивный молодой допечатник, здоровается кулаком и снижает стресс.',type:'happy',home:[2,1,4]},
-  // Цифра
-  {name:'Марина',icon:'👩🏻',desc:'Главная по цифре. Если несешь любой предмет — заберет и накричит.',type:'take',home:[4,5]},
-  {name:'Арсений',icon:'🧑🏻‍💻',desc:'Цифровик, любит помогать: может подарить цветопробу, если сам не пофиксил.',type:'fast',home:[4,5,8]},
-  {name:'Александр Кир',icon:'🧓',desc:'Старший цифровик, запускает свои работы мимо очереди и “ванильничает”.',type:'slow',home:[4,5,8]},
-  {name:'Палина',icon:'👩‍🎤',desc:'Девушка, редко появляется, лежит за компом и снижает стресс.',type:'chill',home:[4]},
-  // Лакировка, второй этаж
-  {name:'Антон',icon:'🧔🏻‍♂️',desc:'Харизматичный, но любит перегораживать путь в лак, пока не выполнен его квест.',type:'lak',home:[9,8]},
-  // Босс
-  {name:'Виторг',icon:'🦒',desc:'Очень высокий босс, на 3-м этаже. Не пропустит, если не все выполнено.',type:'boss',home:[12]}
-];
+// ============= NPCS с тройными диалогами, шансами, портретами =============  
+const NPCS_FULL = [  
+  {  
+    name:'Катя', icon:'👩‍🦰',  
+    portrait: "img/katya.jpg",  
+    desc:'Клиентский менеджер. Молодая, с телефоном, аккуратна, всегда просит сделать цветопробу. Если не сделал — будет ходить за тобой.',  
+    type:'kvest',home:[0,1],follow:false,  
+    dialog1:"Катя: основной квест - сделай цветопробу.", prob1:60,  
+    dialog2:"Катя: ты что забыл про цветопробу?.", prob2:30,  
+    dialog3:"Катя: Ау, бой - шарься без чила на цифряк и шекай мне цветку по фасту!!!.", prob3:10  
+  },  
+  {  
+    name:'Светлана',icon:'👩🏼‍🦱',  
+    portrait: "img/svetlana.jpg",  
+    desc:'Взрослая болтушка, любит задержать у двери длинным разговором. Уйдет только если согласиться.',  
+    type:'barrier',home:[0,1],said:false,  
+    dialog1:"Светлана: основной диалог.", prob1:60,  
+    dialog2:"Светлана: ну как можно было не найти мой файл...", prob2:30,  
+    dialog3:"Светлана: а на самом деле, моя соседка вязать начала...", prob3:10  
+  },  
+  {  
+    name:'Владимир',icon:'🧔',  
+    portrait: "img/vladimir.jpg",  
+    desc:'Новый, просто интересуется, что тут делают. Не мешает работе.',  
+    type:'neutral',home:[0,1,2],  
+    dialog1:"Владимир: основной диалог.", prob1:60,  
+    dialog2:"Владимир: я хотел бы узнать, как мы делаем это всё?", prob2:30,  
+    dialog3:"Владимир: а дозаливки куда по сколько грамм заливать???", prob3:10  
+  },  
+  {  
+    name:'Сергей Ас',icon:'👨‍🦳',  
+    portrait: "img/sergey.jpg",  
+    desc:'Старший допечатник, ворчит по делу о макетах и метках.',  
+    type:'tip',home:[2,1],said:false,  
+    dialog1:"Сергей Ас: основной диалог.", prob1:60,  
+    dialog2:"Сергей Ас: метки не могут быть регистр...", prob2:30,  
+    dialog3:"Сергей Ас: я знаю тайны индизайна ха-ха-ха [зловещий смех]", prob3:10  
+  },  
+  {  
+    name:'Саша Ха',icon:'👱🏻‍♂️',  
+    portrait: "img/sasha.jpg",  
+    desc:'Позитивный молодой допечатник, здоровается кулаком и снижает стресс.',  
+    type:'happy',home:[2,1,4],  
+    dialog1:"Саша Ха: основной диалог.", prob1:60,  
+    dialog2:"Саша Ха: а кто возьмет на проверочку тк?", prob2:30,  
+    dialog3:"Саша Ха: я говорил вам раньше про CorelDRAW...", prob3:10  
+  },  
+  {  
+    name:'Марина',icon:'👩🏻',  
+    portrait: "img/marina.jpg",  
+    desc:'Главная по цифре. Если несешь любой предмет — заберет и накричит.',  
+    type:'take',home:[4,5],  
+    dialog1:"Марина: основной диалог.", prob1:60,  
+    dialog2:"Марина: ПРОСТО УЙДИ!", prob2:30,  
+    dialog3:"Марина: ммм - какая я красивая [красуется у зеркала]", prob3:10  
+  },  
+  {  
+    name:'Арсений',icon:'🧑🏻‍💻',  
+    portrait: "img/arseny.jpg",  
+    desc:'Цифровик, любит помогать: может зделать цветопробу.',  
+    type:'fast',home:[4,5,8],  
+    dialog1:"Арсений: основной диалог.", prob1:60,  
+    dialog2:"Арсений: привет", prob2:30,  
+    dialog3:"Арсений: е2-е4... мат.", prob3:10  
+  },  
+  {  
+    name:'Александр Кир',icon:'🧓',  
+    portrait: "img/kir.jpg",  
+    desc:'Старший цифровик, запускает свои работы мимо очереди и “ванильничает”.',  
+    type:'slow',home:[4,5,8],  
+    dialog1:"Александр Кир: основной диалог.", prob1:60,  
+    dialog2:"Александр Кир: я расскажу как в 1972 году...", prob2:30,  
+    dialog3:"Александр Кир: а ты пробовал добавить больше...", prob3:10  
+  },  
+  {  
+    name:'Палина',icon:'👩‍🎤',  
+    portrait: "img/palina.jpg",  
+    desc:'Девушка, редко появляется, лежит за компом и снижает стресс.',  
+    type:'chill',home:[4],  
+    dialog1:"Палина: основной диалог.", prob1:60,  
+    dialog2:"Палина: хаюшки", prob2:30,  
+    dialog3:"Палина: опять образцы?", prob3:10  
+  },  
+  {  
+    name:'Антон',icon:'🧔🏻‍♂️',  
+    portrait: "img/anton.jpg",  
+    desc:'Харизматичный, но любит перегораживать путь в лак, пока не выполнен его квест.',  
+    type:'lak',home:[9,8],  
+    dialog1:"Антон: основной диалог.", prob1:60,  
+    dialog2:"Антон: ха-ха-ха, хи-хи-хи. Ладно я пошел на лак.", prob2:30,  
+    dialog3:"Антон: Аааа... Мммммм... не вероятно, ладно всем пока!", prob3:10  
+  },  
+  {  
+    name:'Виктор',icon:'🦒',  
+    portrait: "img/viktor.jpg",  
+    desc:'Очень высокий босс, на 3-м этаже. Не пропустит, если не все выполнено.',  
+    type:'boss',home:[12]  
+  }  
+];  
 
-// Индексы квестов и условных предметов
-const QUESTS = [
-  {name:'Цветопроба',id:'proba',desc:'Сделать цветопробу для Кати'},
-  {name:'Лак',id:'lak',desc:'Отлакировать на втором этаже'},
-  {name:'Финал',id:'boss',desc:'Дойти к боссу с выполненными делами'}
-];
+const QUESTS = [  
+  {name:'Цветопроба',id:'proba',desc:'Сделать цветопробу для Кати'},  
+  {name:'Лак',id:'lak',desc:'Отлакировать на втором этаже'},  
+  {name:'Финал',id:'boss',desc:'Дойти к боссу, пройти блиц и завершить день'}  
+];  
 
-/*============= ГЛОБАЛЬНОЕ СОСТОЯНИЕ =============*/
-let player = {}; // имя,at,stress,inventory,quests
-let npcs = [];
+// ============= ГЛОБАЛЬНОЕ СОСТОЯНИЕ =============  
+let player = {};  
+let npcs = [];  
+let dialogOpen = false;  
 
-function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+// ==== УТИЛИТЫ ====  
+function deepClone(o){ return JSON.parse(JSON.stringify(o)); }  
+function randDialog(npc){  
+  let rnd = Math.random()*100;  
+  if(rnd < npc.prob3) return npc.dialog3;  
+  if(rnd < npc.prob3 + npc.prob2) return npc.dialog2;  
+  return npc.dialog1;  
+}  
 
-function startGame(name) {
-  player = {
-    name: name.length?name:'Новичок', at:0, stress:0, inventory:[],
-    busy:false, quests:{proba:false,lak:false,boss:false}, end:false
-  };
-  npcs = deepClone(NPCS_FULL);
-  renderAll();
-  startLoop();
+// ========== СТАРТ И СБРОС =========  
+function startGame(name) {  
+  player = {  
+    name: name.length?name:'Новичок', at:0, stress:0, inventory:[],  
+    busy:false, quests:{proba:false,lak:false,boss:false}, end:false  
+  };  
+  npcs = deepClone(NPCS_FULL);  
+  renderAll();  
+  startLoop();  
+}  
+
+function resetGame(){  
+  let n = prompt("Ваше имя?","Новичок")||"Новичок";  
+  document.getElementById('player-name').innerText = n;  
+  stopLoop();  
+  startGame(n);  
+}  
+
+// ========= РЕНДЕРИНГ =========  
+function renderAll() {  
+  renderMap();  
+  renderQuests();  
+  renderControls();  
+}  
+function renderMap(){  
+  let html = '';  
+  for(let i=0;i<ROOMS.length;++i){  
+    let active = (player.at===i)?'active':'';  
+    html += `<div class="room ${active}" title="${ROOMS[i].desc}">  
+      <div class="room-title">${ROOMS[i].name} ${ROOMS[i].icon}</div>`;  
+    html += `<div class="actors">`;  
+    if(player.at===i)  
+      html += `<span class="actor actor-ego" title="Это вы!">🧑‍💼<br><span class="actor-name">${player.name}</span></span>`;  
+    npcs.filter(n=>n.at===i).forEach(npc=>{  
+      html += `<span class="actor actor-npc" title="${npc.desc}">${npc.icon}<br><span class="actor-name">${npc.name}</span></span>`;  
+    });  
+    html += `</div><div class="doors">Двери: ${  
+      ROOMS[i].doors.map(j=>ROOMS[j].name).join(', ')  
+    }</div></div>`;  
+  }  
+  document.getElementById('map').innerHTML = html;  
+  document.getElementById('stressBar').innerText = player.stress;  
+  document.getElementById('item').innerText = player.inventory.length?player.inventory.join(', '):'пусто';  
+}  
+function renderQuests(){  
+  let q = QUESTS.map(qk=>`<li>${  
+    qk.name  
+  }: <b>${player.quests[qk.id]==='done'?'✅':(player.quests[qk.id]?'🕓':'❌')}</b> — <span class='actor-desc'>${qk.desc}</span></li>`).join('');  
+  document.getElementById('questlog').innerHTML = "<ul>" + q + "</ul>";  
+}  
+function renderControls(){  
+  let html = '';  
+  let here = player.at, doors = ROOMS[here].doors;  
+  doors.forEach(idx=>{  
+    html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;  
+  });  
+  if(ROOMS[here].name==='Аквариум'&&!player.inventory.includes('цветопроба')&&player.quests.proba==='inprogress'){  
+    html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;  
+  }  
+  if(ROOMS[here].name==='Лак'&&!player.inventory.includes('лак')&&player.quests.proba==='done'){  
+    html += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;  
+  }  
+  document.getElementById('control-panel').innerHTML = html;  
+}  
+
+// ========= ОСНОВНОЙ ЦИКЛ ==========  
+let nlooper = null;  
+function stopLoop(){  
+  if(nlooper)clearInterval(nlooper); nlooper=null;  
+}  
+function startLoop(){  
+  stopLoop();  
+  nlooper = setInterval(()=>{  
+    if(player.end || dialogOpen) return;  
+    npcs.forEach(npc=>{  
+      if(npc.type==='kvest'){  
+        if(npc.follow && player.quests.proba!='done') npc.at = player.at;  
+        else npc.at=npc.home[Math.floor(Math.random()*npc.home.length)];  
+      }  
+      else if(npc.home && Math.random()<0.7) {  
+        npc.at=npc.home[Math.floor(Math.random()*npc.home.length)];  
+      }  
+    });  
+    if(player.stress>=100){  
+      player.end=true;  
+      showEvent('Вы сгорели от стресса! 👎',[{text:'Начать заново',action:resetGame}]);  
+    }  
+    renderAll();  
+    checkEvents();  
+  }, 1800);  
+}  
+
+// ============= ЛОГИКА ПЕРЕМЕЩЕНИЯ ==========  
+function moveTo(idx){  
+  player.at = idx;  
+  renderAll();  
+  checkEvents();  
+}  
+
+// --------- ДЕЙСТВИЯ В КОМНАТАХ -----------  
+function makeProba(){  
+  player.inventory.push('цветопроба');  
+  showEvent('Вы сделали цветопробу!',[{text:'Ок',action:renderAll}]);  
+}  
+function makeLak(){  
+  player.inventory.push('лак');  
+  showEvent('Лак покрыт!', [{text:'Ок',action:renderAll}]);  
+}  
+
+// ============= ЛОГИКА NPC, КВЕСТОВ, СОБЫТИЙ ==========  
+function checkEvents(){  
+  // --- КАТЯ ---  
+  let k = npcs.find(x=>x.name==='Катя');  
+  if(player.at==k.at){  
+    if(!player.quests.proba){  
+      showEventNPC(randDialog(k),[{text:'Ок!',action:()=>{k.follow=true;player.quests.proba='inprogress';}}],k);  
+      return;  
+    }  
+    if(player.quests.proba==='inprogress' && player.inventory.includes('цветопроба')){  
+      showEventNPC(randDialog(k),[{text:'Отдать',action:()=>{k.follow=false;player.inventory = player.inventory.filter(x=>x!=='цветопроба');player.quests.proba='done';renderAll();}}],k);  
+      return;  
+    }  
+  }  
+  // --- СВЕТЛАНА ---  
+  let sv = npcs.find(x=>x.name==='Светлана');  
+  if(player.at==sv.at && !sv.said){  
+    player.busy=true;  
+    showEventNPC(randDialog(sv),  
+    [  
+      {text:'Хорошо, мы попробуем',action:()=>{sv.said=true;player.busy=false;}},  
+      {text:'Нет',action:()=>{sv.said=false;checkEvents();}}  
+    ],sv);  
+    return;  
+  }  
+  // --- МАРИНА ---  
+  let mar = npcs.find(x=>x.name==='Марина');  
+  if(player.at==mar.at && player.inventory.length){  
+    let lost = player.inventory.slice();  
+    player.inventory = [];  
+    player.stress+=10;  
+    showEventNPC(randDialog(mar)+`<br>Ты теряешь: <b>${lost.join(', ')}</b>. (стресс +10)`,[{text:'Ок',action:()=>{}}],mar);  
+    return;  
+  }  
+  // --- АРСЕНИЙ ---  
+  let ars = npcs.find(x=>x.name==='Арсений');  
+  if(player.at==ars.at && player.quests.proba==='inprogress' && !player.inventory.includes('цветопроба')){  
+    player.inventory.push('цветопроба');  
+    showEventNPC(randDialog(ars),[{text:'Спасибо',action:()=>{}}],ars);  
+    return;  
+  }  
+  // --- АЛЕКСАНДР КИР ---  
+  let kir = npcs.find(x=>x.name==='Александр Кир');  
+  if(player.at==kir.at){  
+    player.stress+=15;  
+    showEventNPC(randDialog(kir),[{text:'Поскорее уйти',action:()=>{}}],kir);  
+    return;  
+  }  
+  // --- ПАЛИНА ---
+let pal = npcs.find(x=>x.name==='Палина');
+if(player.at==pal.at){
+  player.stress=Math.max(0,player.stress-7);
+  showEventNPC(randDialog(pal), [{text:'Улыбнуться',action:()=>{}}], pal);
+  return;
+}
+// --- САША ХА ---
+let cha = npcs.find(x=>x.name==='Саша Ха');
+if(player.at==cha.at){
+  player.stress=Math.max(0,player.stress-9);
+  showEventNPC(randDialog(cha), [{text:'С кулаком! тыдыщь!',action:()=>{}}], cha);
+  return;
+}
+// --- СЕРГЕЙ АС ---
+let serg = npcs.find(x=>x.name==='Сергей Ас');
+if(player.at==serg.at && !serg.said){
+  showEventNPC(randDialog(serg),[{text:'Понял!',action:()=>{serg.said=true;}}],serg);
+  return;
+}
+// --- ВЛАДИМИР ---
+let vl = npcs.find(x=>x.name==='Владимир');
+if(player.at==vl.at && !vl.said){
+  showEventNPC(randDialog(vl),[{text:'Пожалуй',action:()=>{vl.said=true;}}],vl);
+  return;
+}
+// --- АНТОН ---
+let ant = npcs.find(x=>x.name==='Антон');
+if(player.at==ant.at && player.quests.proba==='done' && !player.inventory.includes('лак')){
+  showEventNPC(randDialog(ant), [{text:'Пойду делать лак',action:()=>{}}], ant);
+  return;
+}
+// --- АНТОН, лак сдаём ---
+if(player.inventory.includes('лак') && player.at==ant.at){
+  showEventNPC(randDialog(ant), [{text:'OK',action:()=>{
+    player.inventory = player.inventory.filter(x=>x!=='лак');
+    player.quests.lak='done';
+    renderAll();
+  }}], ant);
+  return;
+}
+// --- БОСС Виктор ---
+let boss = npcs.find(x=>x.name==='Виктор');
+if(player.at==boss.at){
+  if(player.quests.proba==='done'&&player.quests.lak==='done'){
+    startQuizBOSS(boss);
+    return;
+  } else {
+    showEventNPC('Виктор: “Ты не всё сделал.<br>Где цветопроба и лак?” (вернуться!)',[{text:'Ушел',action:()=>{player.stress+=8;}}],boss);
+    return;
+  }
+}
 }
 
-function resetGame(){
-  let n = prompt("Как вас зовут?","Новичок")||"Новичок";
-  document.getElementById('player-name').innerText = n;
-  stopLoop();
-  startGame(n);
-}
-
-/*========= РЕНДЕРИНГ =========*/
-function renderAll() {
-  renderMap();
-  renderQuests();
-  renderControls();
-}
-function renderMap(){
+// ==== МОДАЛКА ДИАЛОГА С ФОТО NPC ===
+function showEventNPC(text, opts, npc){
+  dialogOpen = true;
+  player.busy = true;
+  document.getElementById('eventBox').style.display = 'block';
+  // Если портрет есть — покажем, иначе пусто
+  if(npc && npc.portrait){
+    document.getElementById('eventPortrait').innerHTML = `<img src="${npc.portrait}" alt="${npc.name}" style="max-width:130px;max-height:130px;border-radius:15px;box-shadow:0 2px 18px #4689ff27;margin:6px auto 9px auto;display:block;">`;
+  } else {
+    document.getElementById('eventPortrait').innerHTML = "";
+  }
+  document.getElementById('eventText').innerHTML = text;
   let html = '';
-  for(let i=0;i<ROOMS.length;++i){
-    let active = (player.at===i)?'active':'';
-    html += `<div class="room ${active}" title="${ROOMS[i].desc}">
-      <div class="room-title">${ROOMS[i].name} ${ROOMS[i].icon}</div>`;
-    html += `<div class="actors">`;
-    // Игрок
-    if(player.at===i)
-      html += `<span class="actor actor-ego" title="Это вы!">🧑‍💼<br><span class="actor-name">${player.name}</span></span>`;
-    // NPCs
-    npcs.filter(n=>n.at===i).forEach(npc=>{
-      html += `<span class="actor actor-npc" title="${npc.desc}">${npc.icon}<br><span class="actor-name">${npc.name}</span></span>`;
-    });
-    html += `</div><div class="doors">Двери: ${
-      ROOMS[i].doors.map(j=>ROOMS[j].name).join(', ')
-    }</div></div>`;
-  }
-  document.getElementById('map').innerHTML = html;
-  document.getElementById('stressBar').innerText = player.stress;
-  document.getElementById('item').innerText = player.inventory.length?player.inventory.join(', '):'пусто';
+  opts.forEach((o,i)=>{ html+=`<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`; });
+  document.getElementById('eventOptions').innerHTML = html;
+  window._eventOpts = opts;
 }
-function renderQuests(){
-  let q = QUESTS.map(qk=>`<li>${
-    qk.name
-  }: <b>${player.quests[qk.id]==='done'?'✅':(player.quests[qk.id]?'🕓':'❌')}</b> — <span class='actor-desc'>${qk.desc}</span></li>`).join('');
-  document.getElementById('questlog').innerHTML = "<ul>" + q + "</ul>";
-}
-function renderControls(){
-  // Доступные перемещения
+function showEvent(text, opts){
+  dialogOpen = true;
+  player.busy = true;
+  document.getElementById('eventBox').style.display = 'block';
+  document.getElementById('eventPortrait').innerHTML = ""; // не NPC — не показываем
+  document.getElementById('eventText').innerHTML = text;
   let html = '';
-  let here = player.at, doors = ROOMS[here].doors;
-  doors.forEach(idx=>{
-    html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
-  });
-  // Действия в комнатах
-  // Цветопроба в аквариуме
-  if(ROOMS[here].name==='Аквариум'&&!player.inventory.includes('цветопроба')&&player.quests.proba==='inprogress'){
-    html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;
-  }
-  // Лак во втором этаже
-  if(ROOMS[here].name==='Лак'&&!player.inventory.includes('лак')&&player.quests.proba==='done'){
-    html += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;
-  }
-  document.getElementById('control-panel').innerHTML = html;
+  opts.forEach((o,i)=>{ html+=`<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`; });
+  document.getElementById('eventOptions').innerHTML = html;
+  window._eventOpts = opts;
 }
-
-/*========= ОСНОВНОЙ ЦИКЛ ==========*/
-let nlooper = null;
-function stopLoop(){
-  if(nlooper)clearInterval(nlooper); nlooper=null;
-}
-function startLoop(){
-  stopLoop();
-  nlooper = setInterval(()=>{
-    if(player.end) return;
-    // Сначала ходят NPC, потом игрок (игрок управляет сам)
-    npcs.forEach(npc=>{
-      // Катя может следовать.
-      if(npc.type==='kvest'){
-        if(npc.follow && player.quests.proba!='done') npc.at = player.at;
-        else npc.at=npc.home[Math.floor(Math.random()*npc.home.length)];
-      }
-      else if(npc.home && Math.random()<0.7) {
-        npc.at=npc.home[Math.floor(Math.random()*npc.home.length)];
-      }
-    });
-    // Если стресс перегорел
-    if(player.stress>=100){
-      player.end=true;
-      showEvent('Вы сгорели от стресса! 👎<br>Рабочий день не завершён.',['Начать заново',resetGame]);
-    }
-    renderAll(); // ловим все события после ходов
-    checkEvents();
-  }, 1800);
-}
-
-/*============= ЛОГИКА ПЕРЕМЕЩЕНИЯ =============*/
-function moveTo(idx){
-  // Без блокировки!
-  player.at = idx;
+window.eventAction=function(idx){
+  document.getElementById('eventBox').style.display='none';
+  let fn=window._eventOpts[idx];
+  if(typeof fn==='object'&&fn.action) fn=fn.action;
+  if(typeof fn==='function') fn();
+  player.busy=false;
+  dialogOpen = false;
   renderAll();
-  checkEvents();
-}
+};
 
-/*------------- ДЕЙСТВИЯ В КОМНАТАХ --------------*/
-function makeProba(){
-  player.inventory.push('цветопроба');
-  showEvent('Вы сделали цветопробу!',['Ок',renderAll]);
-}
-function makeLak(){
-  player.inventory.push('лак');
-  showEvent('Лак покрыт!', ['Ок',renderAll]);
-}
+// ============== БЛИЦ ВИКТОРИНА =================
 
-/*============= ЛОГИКА NPC, КВЕСТОВ, СОБЫТИЙ =============*/
-function checkEvents(){
-  // Катя: если нет квеста — выдает. Если несём цветопробу — сдаём.
-  let k = npcs.find(x=>x.name==='Катя');
-  if(player.at==k.at){
-    if(!player.quests.proba){
-      showEvent('Катя: “Сделай цветопробу!”<br>Я буду следовать за тобой.',[{text:'Ок!',action:()=>{
-        k.follow=true;player.quests.proba='inprogress';
-      }}]);
-      return;
-    }
-    if(player.quests.proba==='inprogress' && player.inventory.includes('цветопроба')){
-      showEvent('Катя: “Спасибо за цветопробу!”',[{text:'Отдать',action:()=>{
-        k.follow=false;
-        player.inventory = player.inventory.filter(x=>x!=='цветопроба');
-        player.quests.proba='done';
-        renderAll();
-      }}]);
-      return;
-    }
+const BOSS_QUIZ = [
+  {
+    question: "Что означает C в аббревиатуре CMYK?",
+    answers: [
+      {text: "Циан (голубой)", correct: true},
+      {text: "Картон", correct: false},
+      {text: "Цвет", correct: false},
+      {text: "Контур", correct: false}
+    ]
+  },
+  {
+    question: "Что такое Pantone?",
+    answers: [
+      {text: "Спецпалитра для подбора фирменных цветов", correct: true},
+      {text: "Плотность бумаги", correct: false},
+      {text: "Тип лака", correct: false},
+      {text: "Вид резки", correct: false}
+    ]
+  },
+  {
+    question: "Что важно для вывода макета в печать?",
+    answers: [
+      {text: "CMYK, обрезные метки, без прозрачностей", correct: true},
+      {text: "PNG с тенью", correct: false},
+      {text: "Только PNG", correct: false},
+      {text: "RGB, как на экране", correct: false}
+    ]
+  },
+  {
+    question: "Что такое допечатная подготовка?",
+    answers: [
+      {text: "Проверка и настройка макета перед печатью", correct: true},
+      {text: "Очистка станков", correct: false},
+      {text: "Выбор лака", correct: false},
+      {text: "Забор коробок", correct: false}
+    ]
+  },
+  {
+    question: "Почему PDF предпочтительнее для офсетной печати?",
+    answers: [
+      {text: "Корректно сохраняет вектор и шрифты", correct: true},
+      {text: "Сохраняет прозрачности", correct: false},
+      {text: "Меньше весит", correct: false},
+      {text: "Дешевле распечатывать", correct: false}
+    ]
+  },
+  {
+    question: "Зачем нужны плашечные цвета?",
+    answers: [
+      {text: "Для согласования специальных фирменных оттенков", correct: true},
+      {text: "Для фотопечати", correct: false},
+      {text: "Для печати на картоне", correct: false},
+      {text: "Для лакировки", correct: false}
+    ]
+  },
+  {
+    question: "Что такое лакировка?",
+    answers: [
+      {text: "Нанесение защитного покрытия на тираж", correct: true},
+      {text: "Склеивание листов", correct: false},
+      {text: "Ламинация", correct: false},
+      {text: "Резка бумаги", correct: false}
+    ]
   }
-  // Светлана – разговор, пока не согласишься
-  let sv = npcs.find(x=>x.name==='Светлана');
-  if(player.at==sv.at && !sv.said){
-    player.busy=true;
-    showEvent('Светлана: “Вам нужно попробовать так, потом вот так... Пока не скажешь <b>ХОРОШО МЫ ПОПРОБУЕМ</b> я не уйду!”',
-    [{text:'Хорошо, мы попробуем',action:()=>{sv.said=true;player.busy=false;}},
-     {text:'Нет',action:()=>{sv.said=false;checkEvents();}}
-    ]);
-    return;
+];
+function shuffle(array) {
+  let arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  // Марина забирает предмет — если идём с чем-то через аквариум
-  let mar = npcs.find(x=>x.name==='Марина');
-  if(player.at==mar.at && player.inventory.length){
-    let lost = player.inventory.slice();
-    player.inventory = [];
-    player.stress+=10;
-    showEvent(`Марина: “Что ты несёшь? Всё выброшено!”<br>Ты теряешь: <b>${lost.join(', ')}</b>. (стресс +10)`,[{text:'Ок',action:()=>{}}]);
-    return;
-  }
-  // Арсений — просто дарит цветопробу если квест в активе и ещё не сделали
-  let ars = npcs.find(x=>x.name==='Арсений');
-  if(player.at==ars.at && player.quests.proba==='inprogress' && !player.inventory.includes('цветопроба')){
-    player.inventory.push('цветопроба');
-    showEvent('Арсений: “Вот цветопроба, всё готово!”',['Спасибо']);
-    return;
-  }
-  // Александр Кир — увеличивает стресс и задерживает
-  let kir = npcs.find(x=>x.name==='Александр Кир');
-  if(player.at==kir.at){
-    player.stress+=15;
-    showEvent('Александр Кир рассказывает “ванильный” анекдот и мимо запускает работу. (стресс +15)', ['Поскорее уйти']);
-    return;
-  }
-  // Палина — снижает стресс!
-  let pal = npcs.find(x=>x.name==='Палина');
-  if(player.at==pal.at){
-    player.stress=Math.max(0,player.stress-7);
-    showEvent('Палина пьёт пиво 🍺 и даёт расслабиться. (стресс -7)', ['Улыбнуться']);
-    return;
-  }
-  // Саша Ха — снижает стресс
-  let cha = npcs.find(x=>x.name==='Саша Ха');
-  if(player.at==cha.at){
-    player.stress=Math.max(0,player.stress-9);
-    showEvent('Саша Ха!: “Держи кулак!” (стресс -9)', ['С кулаком!']);
-    return;
-  }
-  // Сергей – только совет/ворчание
-  let serg = npcs.find(x=>x.name==='Сергей Ас');
-  if(player.at==serg.at && !serg.said){
-    showEvent('Сергей Ас: “Пантон, метки, PDF без теней...”',['Понял!']);
-    serg.said = true;
-    return;
-  }
-  // Владимир нейтрален
-  let vl = npcs.find(x=>x.name==='Владимир');
-  if(player.at==vl.at && !vl.said){
-    showEvent('Владимир: “Это вообще реально напечатать?”',['Пожалуй']);
-    vl.said = true; return;
-  }
-  // Антон блокирует если не сделал лак
-  let ant = npcs.find(x=>x.name==='Антон');
-  if(player.at==ant.at && player.quests.proba==='done' && !player.inventory.includes('лак')){
-    showEvent('Антон преграждает путь:<br>— “Без лакировки не пройду!”', [{text:'Пойду делать лак',action:()=>{}}]);
-    return;
-  }
-  // Сделали лак — квест завершен
-  if(player.inventory.includes('лак')&&player.at==ant.at){
-    showEvent('Антон: “Спасибо! Лак принят!”', [{text:'OK',action:()=>{
-      player.inventory = player.inventory.filter(x=>x!=='лак');
-      player.quests.lak='done';
-      renderAll();
-    }}]);
-    return;
-  }
-  // Босс проверяет все дела
-  let boss = npcs.find(x=>x.name==='Виторг');
-  if(player.at==boss.at){
-    if(player.quests.proba==='done'&&player.quests.lak==='done'){
-      player.end=true;
-      showEvent('Виторг: “Поздравляю, рабочий день завершён!”<br><big>Ты выиграл! 🏆</big>',['Начать заново',resetGame]);
-    } else {
-      showEvent('Виторг: “Ты не всё сделал.<br>Где цветопроба и лак?” (вернуться!)',['Ушел']);
-      player.stress+=8;
-    }
-    return;
-  }
+  return arr;
 }
-
-/*============= МОДАЛКА-СПРАВКА/ЛЕГЕНДА =============*/
+function startQuizBOSS(bossNpc){
+  let questions = shuffle(BOSS_QUIZ.slice());
+  let cur = 0, correct=0;
+  let timeLeft = 20;
+  function showQ() {
+    if(cur >= questions.length) return winQuiz();
+    let q = questions[cur], vars = shuffle(q.answers.slice());
+    let qt = `<b>Вопрос ${cur+1} из 7:</b><br>${q.question}`;
+    qt+= `<br><span style="color:#888;font-size:11px;">Время: <span id="qTimer">${timeLeft}</span> сек</span>`;
+    let opts = vars.map(a=>({
+      text:a.text,
+      action:()=>{clearInterval(timer);if(a.correct) correct++;cur++;timeLeft=20;showQ();}
+    }));
+    showEventNPC(qt, opts, bossNpc);
+    let timer = setInterval(()=>{
+      timeLeft--;
+      let t=document.getElementById('qTimer'); if(t)t.innerText=timeLeft;
+      if(timeLeft<=0){
+        clearInterval(timer);
+        failQuiz();
+      }
+    },1000);
+  }
+  function winQuiz(){
+    player.quests.boss = 'done';
+    player.end = true;
+    showEventNPC(`Виктор: “Поздравляю! Всё правильно! Рабочий день завершён.<br>
+    Верных ответов: ${correct} из 7.<br>
+    <b>Ты выиграл! 🏆</b>`,[{text:'Начать заново',action:resetGame}], bossNpc);
+  }
+  function failQuiz(){
+    player.end = false;
+    showEventNPC(`Время вышло или ошибка!<br>Ты не прошёл блиц, попробуй ещё раз.`,[{text:'Попробовать снова',action:()=>{startQuizBOSS(bossNpc);}}], bossNpc);
+  }
+  showQ();
+}
+// ============= СПРАВКА/ЛЕГЕНДА ==============
 function legendOpen(){
-  let html = "";
-  html += "<b>Локации:</b><ul>";
-  ROOMS.forEach(r=>{
-    html+=`<li><b>${r.name}</b> ${r.icon}: <span class='actor-desc'>${r.desc}</span></li>`;
-  });
+  let html = "<b>Локации:</b><ul>";
+  ROOMS.forEach(r=>{html+=`<li><b>${r.name}</b> ${r.icon}: <span class='actor-desc'>${r.desc}</span></li>`;});
   html += "</ul><b>Персонажи:</b><ul>";
   NPCS_FULL.forEach(n=>{
     html+=`<li>${n.icon}<b> ${n.name}</b>: <span class='actor-desc'>${n.desc}</span></li>`;
@@ -295,26 +510,5 @@ function legendOpen(){
 function legendClose(){
   document.getElementById("descModal").style.display='none';
 }
-
-/*============= СОБЫТИЯ =============*/
-function showEvent(text, opts){
-  player.busy=true;
-  document.getElementById('eventBox').style.display='block';
-  document.getElementById('eventText').innerHTML=text;
-  let html='';
-  opts.forEach((o,i)=>{
-    if(typeof o==='string') html+=`<button class="actionBtn" onclick="eventAction(${i})">${o}</button>`;
-    else html+=`<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`;
-  });
-  document.getElementById('eventOptions').innerHTML=html;
-  window._eventOpts=opts;
-}
-window.eventAction=function(idx){
-  document.getElementById('eventBox').style.display='none';
-  let fn=window._eventOpts[idx]; if(typeof fn==='object'&&fn.action) fn=fn.action;
-  if(typeof fn==='function') fn();
-  player.busy=false;renderAll();
-};
-
-/*============= СТАРТ =============*/
+// ============= СТАРТ ===========
 window.onload=()=>{resetGame();};
