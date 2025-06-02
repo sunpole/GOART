@@ -194,11 +194,14 @@ const NPCS_FULL = [
     portrait: "img/viktor.jpg",
     desc:'Очень высокий босс. Не пропустит, если не все выполнено.',
     type:'boss',
-    home:[12],
-    workplace: 12,
-    spawn: 0,
-    moveInterval: 30000
-  }
+    home:[0,1,2,3,4,5,6,7,8,9,10,11,12], // добавить ВСЕ id комнат по пути (от офиса до его кабинета)
+    workplace: 12,         // его кабинет
+    spawn: 0,              // офис — место первого появления
+    moveInterval: 5000,    // или 3000 (3 секунды) для каждой комнаты
+    patrolInterval: 60000  // ДОБАВИТЬ — интервал между обходами (для вашей логики)
+}
+
+  
 ];
 
 
@@ -307,9 +310,38 @@ function startAllNpcSpawns() {
       npc.at = typeof npc.spawn === "number" ? npc.spawn : 0;
       renderAll();
       // стартуем передвижение, если есть несколько "домов"
-      if (npc.home && npc.home.length > 1) startNpcMovement(npc);
+      if (npc.name === "Виктор") startViktorLogic(npc);
+else if (npc.home && npc.home.length > 1) startNpcMovement(npc);
     }, npc.spawnDelay);
   });
+}
+
+function startViktorLogic(npc) {
+  // 1. Начальная стадия: Виктор появился в офисе (например, room 0)
+  // Пусть home состоит из всех комнат по маршруту, напр. [0,1,2,3,...,12]
+  let route = npc.home.slice(); // Копия маршрута
+  let forward = true;
+
+  // 2. Запускаем первое прохождение (офис -> кабинет)
+  movePatrol(npc, route, () => {
+    // 3. После первичного прохода — запускаем бесконечный патруль
+    setTimeout(function patrolLoop() {
+      // направление туда -> обратно чередуется
+      route = forward ? npc.home.slice().reverse() : npc.home.slice();
+      forward = !forward;
+      movePatrol(npc, route, () => {
+        setTimeout(patrolLoop, 60000); // ждать ровно минуту и снова обход
+      });
+    }, 60000);
+  });
+}
+
+// Классическая функция обхода по маршруту с задержкой 6 сек на комнату
+function movePatrol(npc, route, done) {
+  if (route.length === 0) return done();
+  npc.at = route.shift();
+  renderAll();
+  setTimeout(() => movePatrol(npc, route, done), 6000); // 6 сек на комнату
 }
 
 /**
