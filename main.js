@@ -28,6 +28,7 @@ const ROOMS = [
 
 
 // ============= NPCS =============  
+
 // spawnDelay и moveInterval будут назначаться при запуске (spawnDelay рандомно, moveInterval из конфига!)  
 // spawnDelay в самом массиве можно не задавать  
 /**
@@ -217,18 +218,81 @@ const QUESTS = [
 
 
 // ============= СОСТОЯНИЕ ============  
-let player = {};  
-let npcs = [];  
-let dialogOpen = false;  
+/**
+ * Player — структура описания игрока
+ * @typedef {Object} Player
+ * @property {string} name                   — Имя игрока/персонажа
+ * @property {number} at                     — Локация (id комнаты)
+ * @property {number} stress                 — Текущий уровень стресса
+ * @property {string[]} inventory            — Содержимое инвентаря
+ * @property {boolean} busy                  — Флаг "занят" (анимация, диалог и т.п.)
+ * @property {{[questId:string]:false|"inprogress"|"done"}} quests — Статус выполнения квестов
+ * @property {boolean} end                   — Завершена ли игра
+ */
+
+/**
+ * GameState — глобальное состояние игры
+ * @typedef {Object} GameState
+ * @property {Player} player
+ * @property {NPC[]} npcs
+ * @property {boolean} dialogOpen
+ */
+
+/** @type {GameState} */
+const gameState = {
+  player: {
+    name: 'Новичок',
+    at: 0,
+    stress: 0,
+    inventory: [],
+    busy: false,
+    quests: {
+      proba: false,
+      lak: false,
+      boss: false
+    },
+    end: false
+  },
+  npcs: [],
+  dialogOpen: false
+};
 
 // ==== УТИЛИТЫ ====  
-function deepClone(o){ return JSON.parse(JSON.stringify(o)); }  
-function randDialog(npc){  
-  let rnd = Math.random()*100;  
-  if(rnd < npc.prob3) return npc.dialog3;  
-  if(rnd < npc.prob3 + npc.prob2) return npc.dialog2;  
-  return npc.dialog1;  
-}  
+/**
+ * Глубокое копирование объекта/массива (без функций)
+ * @param {any} o
+ * @returns {any}
+ */
+function deepClone(o) {
+  return JSON.parse(JSON.stringify(o));
+}
+
+/**
+ * Получает случайную фразу NPC по весу вероятностей
+ * @param {NPC} npc
+ * @returns {string}
+ */
+function randDialog(npc) {
+  const rnd = Math.random() * 100;
+  if(rnd < npc.prob3) return npc.dialog3;
+  if(rnd < (npc.prob3 + npc.prob2)) return npc.dialog2;
+  return npc.dialog1;
+}
+
+/**
+ * Перемешивает массив (возвращает новый)
+ * @template T
+ * @param {T[]} array
+ * @returns {T[]}
+ */
+function shuffle(array) {
+  const arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 // ============= СПАВН И ДВИЖЕНИЕ NPC ============  
 function startAllNpcSpawns() {  
