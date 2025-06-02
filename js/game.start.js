@@ -12,7 +12,9 @@ function startGame(name) {
     inventory: [],
     busy: false,
     quests: {proba: false, lak: false, boss: false},
-    end: false
+    end: false,
+    // Обязательно: определяем "свои" комнаты для игрока
+    home: [0, 1] // <--- поменяй на номера нужных помещений для профессии игрока!
   };
   npcs = deepClone(NPCS_FULL); // NPCS_FULL — отдельно импортируется из data-npc.js
   renderAll();
