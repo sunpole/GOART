@@ -1,4 +1,4 @@
-// ============= КАРТА ЛОКАЦИЙ =============  
+// ============= КАРТА ЛОКАЦИЙ =============
 /**
  * Room — структура описания локации/комнаты
  * @typedef {Object} Room
@@ -7,23 +7,24 @@
  * @property {string} icon        — Эмодзи для визуализации
  * @property {number[]} doors     — Список id соседних комнат (связи, переходы)
  * @property {string} desc        — Краткое текстовое описание
+ * @property {number} [limit]     — Максимум людей в комнате (опционально, по умолчанию 3)
  */
 
 /** @type {Room[]} */
 const ROOMS = [
-  {id: 0, name:'Офис',           icon:'🏢', doors:[1,4],     desc:'Здесь работают специалисты по клиентам и бывают допечатники.'},
-  {id: 1, name:'Коридор',        icon:'🚪', doors:[0,2,5],   desc:'Здесь все проходят из офиса в аквариум.'},
-  {id: 2, name:'Склад 1 эт',     icon:'📦', doors:[1,3,6],   desc:'Место для расходников и паллет.'},
-  {id: 3, name:'ПР. цех дверь',  icon:'🚧', doors:[2,7],     desc:'Проход на производство.'},
-  {id: 4, name:'Аквариум',       icon:'🖨', doors:[0,5,8],   desc:'Цифровая печать, тут толпа цифровиков.'},
-  {id: 5, name:'Коридор 2',      icon:'⬅️', doors:[1,4,6],   desc:'Проход между аквариумом и складом.'},
-  {id: 6, name:'Дверь на 2 эт',  icon:'⬆️', doors:[2,5,9],   desc:'Лестница на второй этаж.'},
-  {id: 7, name:'Проход в произв.',icon:'🚧',doors:[3,6,10],   desc:'Вход на большой цех.'},
-  {id: 8, name:'Производство',   icon:'🏭',doors:[4,9,11],   desc:'Шумный зал с машинами, коробки, пакеты, полки.'},
-  {id: 9, name:'Лак',            icon:'💧',doors:[6,8,12],   desc:'Лакировка, Антон частенько тут.'},
-  {id:10, name:'Паллеты',        icon:'🪵',doors:[7,8,11],   desc:'Завалено коробками.'},
-  {id:11, name:'Склад 2 эт',     icon:'📦',doors:[8,10],     desc:'Все запасы и расходники.'},
-  {id:12, name:'Кабинет босса',  icon:'👔',doors:[9],        desc:'Офис Виктора. Доступен только после всех дел.'}
+  {id: 0, name:'Офис',           icon:'🏢',  doors:[1,4],     desc:'Здесь работают специалисты по клиентам и бывают допечатники.',   limit: 15},
+  {id: 1, name:'Коридор',        icon:'🚪',  doors:[0,2,5],   desc:'Здесь все проходят из офиса в аквариум.',                        limit: 5},
+  {id: 2, name:'Склад 1 эт',     icon:'📦',  doors:[1,3,6],   desc:'Место для расходников и паллет.',                                limit: 3},
+  {id: 3, name:'ПР. цех дверь',  icon:'🚧',  doors:[2,7],     desc:'Проход на производство.',                                       limit: 2},
+  {id: 4, name:'Аквариум',       icon:'🖨',  doors:[0,5,8],   desc:'Цифровая печать, тут толпа цифровиков.',                        limit: 3},
+  {id: 5, name:'Коридор 2',      icon:'⬅️',  doors:[1,4,6],   desc:'Проход между аквариумом и складом.',                            limit: 5},
+  {id: 6, name:'Дверь на 2 эт',  icon:'⬆️',  doors:[2,5,9],   desc:'Лестница на второй этаж.',                                      limit: 2},
+  {id: 7, name:'Проход в произв.',icon:'🚧', doors:[3,6,10],  desc:'Вход на большой цех.',                                          limit: 2},
+  {id: 8, name:'Производство',   icon:'🏭',  doors:[4,9,11],  desc:'Шумный зал с машинами, коробки, пакеты, полки.',                 limit: 5},
+  {id: 9, name:'Лак',            icon:'💧',  doors:[6,8,12],  desc:'Лакировка, Антон частенько тут.',                                limit: 2},
+  {id:10, name:'Паллеты',        icon:'🪵',  doors:[7,8,11],  desc:'Завалено коробками.',                                           limit: 3},
+  {id:11, name:'Склад 2 эт',     icon:'📦',  doors:[8,10],    desc:'Все запасы и расходники.',                                      limit: 3},
+  {id:12, name:'Кабинет босса',  icon:'👔',  doors:[9],       desc:'Офис Виктора. Доступен только после всех дел.',                 limit: 2}
 ];
 
 
@@ -295,311 +296,575 @@ function shuffle(array) {
 }
 
 // ============= СПАВН И ДВИЖЕНИЕ NPC ============  
-function startAllNpcSpawns() {  
-  npcs.forEach((npc, idx) => {  
-    setTimeout(() => {  
-      npc._spawned = true;  
-      npc.at = typeof npc.spawn === "number" ? npc.spawn : 0;  
-      renderAll();  
-      // персональный цикл перемещения (кроме одной home)  
-      if (npc.home && npc.home.length > 1) startNpcMovement(npc);  
-    }, npc.spawnDelay);  
-  });  
-}  
-function startNpcMovement(npc) {  
-  if (npc._moveTimer) clearInterval(npc._moveTimer);  
-  const interval = typeof npc.moveInterval === "number" ? npc.moveInterval : 15000;  
-  npc._moveTimer = setInterval(() => {  
-    if (!npc._spawned) return;  
-    if (npc.name === "Марина") return; // Марина двигается только по особой логике (kickNpcs...)  
-    // Находим куда ещё можно  
-    const currAt = npc.at;  
-    const possible = npc.home.filter(idx => idx !== currAt);  
-    if (!possible.length) return;  
-    const next = possible[Math.floor(Math.random() * possible.length)];  
-    let limit = npcs.filter(n => n._spawned && n.at === next).length;  
-    if (limit >= 3) return;  
-    // Не идём к Марине  
-    if (npcs.find(n => n._spawned && n.at === next && n.name === "Марина")) return;  
-    npc.at = next;  
-    renderAll();  
-  }, interval);  
-}  
+/**
+ * Запускает таймеры появления всех NPC (разброс по spawnDelay).
+ * После появления NPC начинают перемещаться, если у них более одной зоны обитания.
+ */
+function startAllNpcSpawns() {
+  gameState.npcs.forEach((npc, idx) => {
+    setTimeout(() => {
+      npc._spawned = true;
+      npc.at = typeof npc.spawn === "number" ? npc.spawn : 0;
+      renderAll();
+      // стартуем передвижение, если есть несколько "домов"
+      if (npc.home && npc.home.length > 1) startNpcMovement(npc);
+    }, npc.spawnDelay);
+  });
+}
+
+/**
+ * Циклическое случайное перемещение одного NPC по его home-маршруту.
+ * Реализует:
+ *  1. Особое правило для Марины и аквариума (доступ только избранным).
+ *  2. "Туннелирование" при заторах: NPC не блокируется, если все комнаты заняты, а проходит через полные дальше.
+ * @param {NPC} npc - Объект NPC, который должен двигаться
+ */
+function startNpcMovement(npc) {
+  if (npc._moveTimer) clearInterval(npc._moveTimer);
+
+  // Интервал перемещений (мс): индивидуальный или стандарт 15 сек.
+  const interval = typeof npc.moveInterval === "number" ? npc.moveInterval : 15000;
+
+  npc._moveTimer = setInterval(() => {
+    if (!npc._spawned) return; // Не двигаем до спавна
+    if (npc.name === "Марина") return; // Марину двигает особая логика
+
+    const currAt = npc.at;
+    // Все локации, куда NPC может ходить (кроме текущей)
+    const possible = npc.home.filter(idx => idx !== currAt);
+    if (!possible.length) return; // Вообще некуда идти
+
+    // --- АКВАРИУМ & МАРИНА: подготовка к спец. правилу ---
+    const AQUARIUM_ID = ROOMS.find(r => r.name === 'Аквариум')?.id;
+    // Кто может быть с Мариной в аквариуме
+    const allowedWithMarina = ['Саша', 'Кир', 'Виктор', 'Арсений', gameState.player.name];
+
+    // 1. Cначала ищем свободные комнаты для обычного перемещения
+    const openRooms = possible.filter(roomId => {
+      // Ограничение по лимитам
+      const occupants = gameState.npcs.filter(n => n._spawned && n.at === roomId).length;
+      const roomLimit = ROOMS[roomId].limit || 3;
+
+      // Спец. правило: аквариум с Мариной
+      if (roomId === AQUARIUM_ID) {
+        const marinaInAquarium = gameState.npcs.find(n => n.name === 'Марина' && n._spawned && n.at === AQUARIUM_ID);
+        // Если в аквариуме Марина и этот NPC не из разрешённых — нельзя идти
+        if (marinaInAquarium && !allowedWithMarina.includes(npc.name)) return false;
+      }
+
+      // Если лимит не достигнут — считается "свободной"
+      return occupants < roomLimit;
+    });
+
+    if (openRooms.length) {
+      // Есть свободные комнаты — просто идём!
+      const next = openRooms[Math.floor(Math.random() * openRooms.length)];
+      npc.at = next;
+      renderAll();
+      return;
+    }
+
+    // 2. Затор: все комнаты полны. "Туннелирование"!
+    // Выбираем любую соседнюю комнату, кроме текущей (но с учётом особенностей аквариума)
+    let tunnelRooms = possible;
+
+    // Спец. правило: аквариум с Мариной — даже туннелировать нельзя!
+    tunnelRooms = tunnelRooms.filter(roomId => {
+      if (roomId === AQUARIUM_ID) {
+        const marinaInAquarium = gameState.npcs.find(n => n.name === 'Марина' && n._spawned && n.at === AQUARIUM_ID);
+        if (marinaInAquarium && !allowedWithMarina.includes(npc.name)) return false;
+      }
+      return true;
+    });
+
+    if (!tunnelRooms.length) return; // Все соседи под запретом (от Марини!)
+
+    // Выбираем случайный туннель
+    const tunnel = tunnelRooms[Math.floor(Math.random() * tunnelRooms.length)];
+    npc.at = tunnel;
+
+    // Пытаемся сразу пройти из туннельной комнаты в любую разрешённую (кроме только что покинутой)
+    const tunnel_exits = npc.home.filter(idx => idx !== tunnel);
+    // Опять фильтр по аквариуму (даже если после туннеля туда нельзя!)
+    const nextAfterTunnel = tunnel_exits.find(roomId => {
+      if (roomId === AQUARIUM_ID) {
+        const marinaInAquarium = gameState.npcs.find(n => n.name === 'Марина' && n._spawned && n.at === AQUARIUM_ID);
+        if (marinaInAquarium && !allowedWithMarina.includes(npc.name)) return false;
+      }
+      return true;
+    });
+    if (nextAfterTunnel !== undefined) npc.at = nextAfterTunnel;
+
+    renderAll();
+
+  }, interval);
+}
+
+// ========== СТАРТ И СБРОС ==========
+
+/**
+ * Запуск новой игровой сессии.
+ * @param {string} name — Имя игрока
+ * Инициализирует состояние игрока и NPC.
+ */
+function startGame(name) {
+  // Создаём объект игрока со стартовыми параметрами
+  gameState.player = {
+    name: name.length ? name : 'Новичок',
+    at: 0, // Стартовая комната
+    stress: 0,
+    inventory: [],
+    busy: false,
+    quests: { proba: false, lak: false, boss: false },
+    end: false
+  };
+
+  // Клонируем и инициализируем NPC
+  gameState.npcs = deepClone(NPCS_FULL).map((npc) => {
+    let obj = { ...npc };
+    obj.spawnDelay = 10000 + Math.floor(Math.random() * 10001); // 10–20 сек
+    obj._moveTimer = null;
+    obj._spawned = false;
+    obj.at = typeof obj.spawn === "number" ? obj.spawn : 0;
+    return obj;
+  });
+
+  renderAll();         // Отрисовываем начальное состояние
+  startAllNpcSpawns(); // Запускаем появление и движение NPC
+}
+
+/**
+ * Сбрасывает игру и спрашивает новое имя игрока.
+ */
+function resetGame() {
+  let n = prompt("Ваше имя?", "Новичок") || "Новичок";
+  document.getElementById('player-name').innerText = n;
+  startGame(n);
+}
 
 
-// ========== СТАРТ И СБРОС =========  
-function startGame(name) {  
-  player = {  
-    name: name.length ? name : 'Новичок',  
-    at: 0, stress: 0, inventory: [],  
-    busy: false, quests: { proba: false, lak: false, boss: false }, end: false  
-  };  
+// ========== РЕНДЕРИНГ ==========
 
-  npcs = deepClone(NPCS_FULL).map((npc, idx) => {  
-    let obj = { ...npc };  
-    obj.spawnDelay = 10000 + Math.floor(Math.random() * 10001); // 10-20 сек для каждого  
-    obj._moveTimer = null;  
-    obj._spawned = false;  
-    obj.at = typeof obj.spawn === "number" ? obj.spawn : 0;  
-    return obj;  
-  });  
+/**
+ * Основной перерисовщик интерфейса
+ */
+function renderAll() {
+  renderMap();
+  renderQuests();
+  renderControls();
+}
 
-  renderAll();  
-  startAllNpcSpawns();  
-}  
+/**
+ * Рендер визуальной карты (комнаты, игрок, NPC, двери)
+ */
+function renderMap() {
+  let html = '';
+  for(let i=0; i<ROOMS.length; ++i) {
+    let active = (gameState.player.at === i) ? 'active' : '';
+    html += `<div class="room ${active}" title="${ROOMS[i].desc}">
+      <div class="room-title">${ROOMS[i].name} ${ROOMS[i].icon}</div>`;
+    html += `<div class="actors">`;
+    if(gameState.player.at === i)
+      html += `<span class="actor actor-ego" title="Это вы!">🧑‍💼<br><span class="actor-name">${gameState.player.name}</span></span>`;
+    gameState.npcs.filter(n=>n._spawned && n.at===i).forEach(npc=>{
+      html += `<span class="actor actor-npc" title="${npc.desc}">${npc.icon}<br><span class="actor-name">${npc.name}</span></span>`;
+    });
+    html += `</div><div class="doors">Двери: ${
+      ROOMS[i].doors.map(j=>ROOMS[j].name).join(', ')
+    }</div></div>`;
+  }
+  document.getElementById('map').innerHTML = html;
+  document.getElementById('stressBar').innerText = gameState.player.stress;
+  document.getElementById('item').innerText = gameState.player.inventory.length
+    ? gameState.player.inventory.join(', ') : 'пусто';
+}
 
-function resetGame(){  
-  let n = prompt("Ваше имя?","Новичок")||"Новичок";  
-  document.getElementById('player-name').innerText = n;  
-  startGame(n);  
-}  
+/**
+ * Отображение логов квестов и их состояния.
+ */
+function renderQuests() {
+  let q = QUESTS.map(qk => `<li>${
+    qk.name
+  }: <b>${
+    gameState.player.quests[qk.id] === 'done' ? '✅' :
+    (gameState.player.quests[qk.id] ? '🕓' : '❌')
+  }</b> — <span class='actor-desc'>${qk.desc}</span></li>`).join('');
+  document.getElementById('questlog').innerHTML = "<ul>" + q + "</ul>";
+}
 
-// ========== РЕНДЕРИНГ ==========  
-function renderAll() {  
-  renderMap();  
-  renderQuests();  
-  renderControls();  
-}  
-function renderMap(){  
-  let html = '';  
-  for(let i=0;i<ROOMS.length;++i){  
-    let active = (player.at===i)?'active':'';  
-    html += `<div class="room ${active}" title="${ROOMS[i].desc}">  
-      <div class="room-title">${ROOMS[i].name} ${ROOMS[i].icon}</div>`;  
-    html += `<div class="actors">`;  
-    if(player.at===i)  
-      html += `<span class="actor actor-ego" title="Это вы!">🧑‍💼<br><span class="actor-name">${player.name}</span></span>`;  
-    npcs.filter(n=>n._spawned && n.at===i).forEach(npc=>{  
-      html += `<span class="actor actor-npc" title="${npc.desc}">${npc.icon}<br><span class="actor-name">${npc.name}</span></span>`;  
-    });  
-    html += `</div><div class="doors">Двери: ${  
-      ROOMS[i].doors.map(j=>ROOMS[j].name).join(', ')  
-    }</div></div>`;  
-  }  
-  document.getElementById('map').innerHTML = html;  
-  document.getElementById('stressBar').innerText = player.stress;  
-  document.getElementById('item').innerText = player.inventory.length?player.inventory.join(', '):'пусто';  
-}  
-function renderQuests() {  
-  let q = QUESTS.map(qk => `<li>${  
-    qk.name  
-  }: <b>${player.quests[qk.id]==='done'?'✅':(player.quests[qk.id]?'🕓':'❌')}</b> — <span class='actor-desc'>${qk.desc}</span></li>`).join('');  
-  document.getElementById('questlog').innerHTML = "<ul>" + q + "</ul>";  
-}  
-function renderControls(){  
-  let html = '';  
-  let here = player.at, doors = ROOMS[here].doors;  
-  doors.forEach(idx=>{  
-    const npcsHere = npcs.filter(n => n._spawned && n.at === idx).length;  
-    if(npcsHere + 1 > 3){  
-      html += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;  
-    } else {  
-      html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;  
-    }  
-  });  
-  if(ROOMS[here].name==='Аквариум' && !player.inventory.includes('цветопроба') && player.quests.proba==='inprogress'){  
-    html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;  
-  }  
-  if(ROOMS[here].name==='Лак' && !player.inventory.includes('лак') && player.quests.proba==='done'){  
-    html += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;  
-  }  
-  document.getElementById('control-panel').innerHTML = html;  
-}  
+/**
+ * Отрисовка кнопок управления перемещениями и действиями игрока
+ */
+function renderControls() {
+  let html = '';
+  let here = gameState.player.at, doors = ROOMS[here].doors;
+  doors.forEach(idx => {
+    const npcsHere = gameState.npcs.filter(n => n._spawned && n.at === idx).length;
+    const roomLimit = ROOMS[idx].limit || 3;
+    if(npcsHere + 1 > roomLimit) {
+      html += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;
+    } else {
+      html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
+    }
+  });
+
+  // Спец-действия для квестов и фаз игры
+  if(ROOMS[here].name === 'Аквариум' &&
+     !gameState.player.inventory.includes('цветопроба') &&
+     gameState.player.quests.proba === 'inprogress') {
+    html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;
+  }
+  if(ROOMS[here].name === 'Лак' &&
+     !gameState.player.inventory.includes('лак') &&
+     gameState.player.quests.proba === 'done') {
+    html += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;
+  }
+  document.getElementById('control-panel').innerHTML = html;
+}
+
+
 
 // -------------- ПРОЧИЕ ФУНКЦИИ И ЛОГИКА -----------  
 
-// Функция: МАРИНА удаляет NPC из своей комнаты при переносе
+/**
+ * Марина силой освобождает комнату roomIdx:
+ * каждый неподходящий NPC "туннелирует" до первой свободной разрешённой комнаты из своего маршрута,
+ * если не нашёл — уходит в Офис (если он в его home).
+ * @param {number} roomIdx — индекс комнаты, из которой нужно выгнать NPC
+ */
 function kickNpcsFromRoom(roomIdx) {
-  npcs.forEach(npc => {
+  const AQUARIUM_ID = ROOMS.find(r => r.name === 'Аквариум')?.id;
+  const OFFICE_ID    = ROOMS.find(r => r.name === 'Офис')?.id;      // "Офис" должен быть в ROOMS
+  const allowedWithMarina = ['Саша', 'Кир', 'Виктор', 'Арсений', gameState.player.name];
+
+  gameState.npcs.forEach(npc => {
+    // Только если: живой, в комнате, не Марина, НЕ "разрешённый" в Аквариуме
     if (
       npc._spawned &&
+      npc.at === roomIdx &&
       npc.name !== 'Марина' &&
-      npc.at === roomIdx
+      !(
+        roomIdx === AQUARIUM_ID &&
+        allowedWithMarina.includes(npc.name)
+      )
     ) {
-      // Найти куда уйти: в любую свою доступную комнату, где Марина НЕ находится и где мест < 3
-      const freeHomes = npc.home.filter(idx =>
+      // 1. Попробовать найти первую свободную комнату в маршруте (кроме текущей, без Марины, не превысив лимит)
+      let freeHome = npc.home.find(idx =>
         idx !== roomIdx &&
-        npcs.filter(n => n._spawned && n.at === idx && n.name !== 'Марина').length < 3 &&
-        npcs.find(n => n._spawned && n.at === idx && n.name === 'Марина') == null
+        gameState.npcs.filter(n => n._spawned && n.at === idx && n.name !== 'Марина').length < (ROOMS[idx].limit || 3) &&
+        !gameState.npcs.some(n => n._spawned && n.at === idx && n.name === 'Марина')
       );
-      if(freeHomes.length) npc.at = freeHomes[Math.floor(Math.random() * freeHomes.length)];
-      // Если совсем некуда идти — остаётся в комнате
+      // 2. Если нет — "туннелируем": идём в любую разрешённую комнату home (через любую заполненную), а не находим свободную — в офис
+      if(freeHome === undefined) {
+        // Если офис есть среди home — переместить туда
+        if (npc.home.includes(OFFICE_ID)) {
+          npc.at = OFFICE_ID;
+        } else {
+          // Иначе просто в любую комнату из home
+          npc.at = npc.home.find(idx => idx !== roomIdx) ?? roomIdx;
+        }
+      } else {
+        npc.at = freeHome;
+      }
+      // (опционально: здесь можно реализовать многошаговую "протечку", если хочешь более глубокий туннель — пока не окажется в свободной)
     }
   });
 }
 
-// --------- ПЕРЕМЕЩЕНИЕ ИГРОКА -----------
-function moveTo(idx){
-  const npcsHere = npcs.filter(n => n._spawned && n.at === idx).length;
-  if (npcsHere + 1 > 3) {
-    showEvent('В комнате уже максимальное количество людей (3). Подожди, пока кто-то выйдет!', [{text: 'OK', action: ()=>{}}]);
+
+
+
+// --------- ПЕРЕМЕЩЕНИЕ ИГРОКА ----------
+/**
+ * Переместить игрока по индексу комнаты (idx).
+ * Учитывает лимит комнаты и специальные правила (например, для аквариума с Мариной).
+ * @param {number} idx — индекс комнаты
+ */
+function moveTo(idx) {
+  const npcsHere = gameState.npcs.filter(n => n._spawned && n.at === idx).length;
+  const roomLimit = ROOMS[idx].limit || 3;
+
+  // Особое правило: в Аквариум с Мариной может попасть не каждый
+  const AQUARIUM_ID = ROOMS.find(r => r.name === 'Аквариум')?.id;
+  const allowedWithMarina = ['Саша', 'Кир', 'Виктор', 'Арсений', gameState.player.name];
+  const marinaInRoom = gameState.npcs.some(n => n.name === 'Марина' && n._spawned && n.at === idx);
+
+  if (npcsHere + 1 > roomLimit) {
+    showEvent(
+      `В комнате уже максимальное количество людей (${roomLimit}). Подожди, пока кто-то выйдет!`,
+      [{ text: 'OK', action: () => {} }]
+    );
     return;
   }
-  player.at = idx;
+
+  if (
+    idx === AQUARIUM_ID &&
+    marinaInRoom &&
+    !allowedWithMarina.includes(gameState.player.name)
+  ) {
+    showEvent(
+      'Марина не разрешает входить сюда посторонним!',
+      [{ text: 'OK', action: () => {} }]
+    );
+    return;
+  }
+
+  gameState.player.at = idx;
   renderAll();
   checkEvents();
 }
 
+
 // --------- ДЕЙСТВИЯ В КОМНАТАХ -----------
-function makeProba(){
-  player.inventory.push('цветопроба');
-  showEvent('Вы сделали цветопробу!',[{text:'Ок',action:renderAll}]);
-}
-function makeLak(){
-  player.inventory.push('лак');
-  showEvent('Лак покрыт!', [{text:'Ок',action:renderAll}]);
+
+/**
+ * Сделать цветопробу — добавить в инвентарь игрока, обновить статус квеста.
+ */
+function makeProba() {
+  if (!gameState.player.inventory.includes('цветопроба')) {
+    gameState.player.inventory.push('цветопроба');
+    // Если квест был в процессе, сделать "выполнено" (если так принято)
+    if (gameState.player.quests.proba === 'inprogress') {
+      gameState.player.quests.proba = 'done';
+    }
+  }
+  showEvent('Вы сделали цветопробу!', [{ text: 'Ок', action: renderAll }]);
 }
 
-// ============= ЛОГИКА NPC, КВЕСТОВ, СОБЫТИЙ ==========  
-function checkEvents(){  
+/**
+ * Сделать лак — добавить в инвентарь, можно обновить квест.
+ */
+function makeLak() {
+  if (!gameState.player.inventory.includes('лак')) {
+    gameState.player.inventory.push('лак');
+    // Если квест про лак был в процессе — отметить выполненным?
+    if (gameState.player.quests.lak === 'inprogress') {
+      gameState.player.quests.lak = 'done';
+    }
+  }
+  showEvent('Лак покрыт!', [{ text: 'Ок', action: renderAll }]);
+}
+
+
+
+// ============= ЛОГИКА NPC, КВЕСТОВ, СОБЫТИЙ ==========
+
+/**
+ * Получить NPC по имени (если он существует и заспаунен)
+ * @param {string} name
+ * @returns {Object|null}
+ */
+function getNPC(name) {
+  return gameState.npcs.find(n => n._spawned && n.name === name) || null;
+}
+
+function checkEvents() {
+  const player = gameState.player;
+
   // --- КАТЯ ---
-  let k = npcs.find(x=>x._spawned && x.name==='Катя');
-  if(k && player.at==k.at){
-    if(!player.quests.proba){
-      showEventNPC(randDialog(k),[{text:'Ок!',action:()=>{k.follow=true;player.quests.proba='inprogress';}}],k);
+  const katya = getNPC('Катя');
+  if (katya && player.at === katya.at) {
+    if (!player.quests.proba) {
+      showEventNPC(randDialog(katya), [{
+        text: 'Ок!',
+        action: () => { katya.follow = true; player.quests.proba = 'inprogress'; }
+      }], katya);
       return;
     }
-    if(player.quests.proba==='inprogress' && player.inventory.includes('цветопроба')){
-      showEventNPC(randDialog(k),[{text:'Отдать',action:()=>{k.follow=false;player.inventory = player.inventory.filter(x=>x!=='цветопроба');player.quests.proba='done';renderAll();}}],k);
+    if (player.quests.proba === 'inprogress' && player.inventory.includes('цветопроба')) {
+      showEventNPC(randDialog(katya), [{
+        text: 'Отдать',
+        action: () => {
+          katya.follow = false;
+          player.inventory = player.inventory.filter(x => x !== 'цветопроба');
+          player.quests.proba = 'done';
+          renderAll();
+        }
+      }], katya);
       return;
     }
   }
-  // --- СВЕТЛАНА ---  
-  let sv = npcs.find(x=>x._spawned && x.name==='Светлана');
-  if(sv && player.at==sv.at && !sv.said){
-    player.busy=true;
-    showEventNPC(randDialog(sv),
-    [
-      {text:'Хорошо, мы попробуем вам помочь',action:()=>{sv.said=true;player.busy=false;}},
-      {text:'Нет, я не буду, идите к Виктору!',action:()=>{sv.said=false;checkEvents();}}
-    ],sv);
+
+  // --- СВЕТЛАНА ---
+  const svetlana = getNPC('Светлана');
+  if (svetlana && player.at === svetlana.at && !svetlana.said) {
+    player.busy = true;
+    showEventNPC(randDialog(svetlana), [
+      {
+        text: 'Хорошо, мы попробуем вам помочь',
+        action: () => { svetlana.said = true; player.busy = false; }
+      },
+      {
+        text: 'Нет, я не буду, идите к Виктору!',
+        action: () => { svetlana.said = false; checkEvents(); }
+      }
+    ], svetlana);
     return;
   }
+
   // --- МАРИНА ---
-  let mar = npcs.find(x=>x._spawned && x.name==='Марина');
-  if(mar && player.at==mar.at) {
-    if(player.inventory.length){
-      let lost = player.inventory.slice();
+  const marina = getNPC('Марина');
+  if (marina && player.at === marina.at) {
+    if (player.inventory.length) {
+      const lost = player.inventory.slice();
       player.inventory = [];
       player.stress += 10;
       showEventNPC(
-        randDialog(mar) + `<br>Ты теряешь: <b>${lost.join(', ')}</b>. (стресс +10)`,
-        [{text:'Ок',action:()=>{}}],
-        mar
+        randDialog(marina) + `<br>Ты теряешь: <b>${lost.join(', ')}</b>. (стресс +10)`,
+        [{ text: 'Ок', action: () => {} }],
+        marina
       );
     } else {
       showEventNPC(
-        randDialog(mar) + "<br>У тебя ничего нет, иди!",
-        [{text:'Ок',action:()=>{}}],
-        mar
+        randDialog(marina) + "<br>У тебя ничего нет, иди!",
+        [{ text: 'Ок', action: () => {} }],
+        marina
       );
     }
     return;
   }
+
   // --- АРСЕНИЙ ---
-  let ars = npcs.find(x=>x._spawned && x.name==='Арсений');
-  if(ars && player.at==ars.at && player.quests.proba==='inprogress' && !player.inventory.includes('цветопроба')){
+  const arseniy = getNPC('Арсений');
+  if (arseniy && player.at === arseniy.at && player.quests.proba === 'inprogress' && !player.inventory.includes('цветопроба')) {
     player.inventory.push('цветопроба');
-    showEventNPC(randDialog(ars),[{text:'Спасибо',action:()=>{}}],ars);
+    showEventNPC(randDialog(arseniy), [{ text: 'Спасибо', action: () => { } }], arseniy);
     return;
   }
+
   // --- АЛЕКСАНДР КИР ---
-  let kir = npcs.find(x=>x._spawned && x.name==='Александр Кир');
-  if(kir && player.at==kir.at){
-    player.stress+=15;
-    showEventNPC(randDialog(kir),[{text:'Поскорее уйти',action:()=>{}}],kir);
+  const kir = getNPC('Александр Кир');
+  if (kir && player.at === kir.at) {
+    player.stress += 15;
+    showEventNPC(randDialog(kir), [{ text: 'Поскорее уйти', action: () => { } }], kir);
     return;
   }
-  // --- ПАЛИНА ---
-  let pal = npcs.find(x=>x._spawned && x.name==='Полина');
-  if(pal && player.at==pal.at){
-    player.stress=Math.max(0,player.stress-7);
-    showEventNPC(randDialog(pal), [{text:'Улыбнуться',action:()=>{}}], pal);
+
+  // --- ПОЛИНА ---
+  const polina = getNPC('Полина');
+  if (polina && player.at === polina.at) {
+    player.stress = Math.max(0, player.stress - 7);
+    showEventNPC(randDialog(polina), [{ text: 'Улыбнуться', action: () => { } }], polina);
     return;
   }
+
   // --- САША ХА ---
-  let cha = npcs.find(x=>x._spawned && x.name==='Саша Ха');
-  if(cha && player.at==cha.at){
-    player.stress=Math.max(0,player.stress-9);
-    showEventNPC(randDialog(cha), [{text:'С кулаком! тыдыщь!',action:()=>{}}], cha);
+  const sashaHa = getNPC('Саша Ха');
+  if (sashaHa && player.at === sashaHa.at) {
+    player.stress = Math.max(0, player.stress - 9);
+    showEventNPC(randDialog(sashaHa), [{ text: 'С кулаком! тыдыщь!', action: () => { } }], sashaHa);
     return;
   }
+
   // --- СЕРГЕЙ АС ---
-  let serg = npcs.find(x=>x._spawned && x.name==='Сергей Ас');
-  if(serg && player.at==serg.at && !serg.said){
-    showEventNPC(randDialog(serg),[{text:'Понял!',action:()=>{serg.said=true;}}],serg);
+  const sergeyAs = getNPC('Сергей Ас');
+  if (sergeyAs && player.at === sergeyAs.at && !sergeyAs.said) {
+    showEventNPC(randDialog(sergeyAs), [{ text: 'Понял!', action: () => { sergeyAs.said = true; } }], sergeyAs);
     return;
   }
+
   // --- ВЛАДИМИР ---
-  let vl = npcs.find(x=>x._spawned && x.name==='Владимир');
-  if(vl && player.at==vl.at && !vl.said){
-    showEventNPC(randDialog(vl),[{text:'Пожалуй',action:()=>{vl.said=true;}}],vl);
+  const vladimir = getNPC('Владимир');
+  if (vladimir && player.at === vladimir.at && !vladimir.said) {
+    showEventNPC(randDialog(vladimir), [{ text: 'Пожалуй', action: () => { vladimir.said = true; } }], vladimir);
     return;
   }
+
   // --- АНТОН ---
-  let ant = npcs.find(x=>x._spawned && x.name==='Антон');
-  if(ant && player.at==ant.at && player.quests.proba==='done' && !player.inventory.includes('лак')){
-    showEventNPC(randDialog(ant), [{text:'Пойду делать лак',action:()=>{}}], ant);
+  const anton = getNPC('Антон');
+  if (anton && player.at === anton.at && player.quests.proba === 'done' && !player.inventory.includes('лак')) {
+    showEventNPC(randDialog(anton), [{ text: 'Пойду делать лак', action: () => { } }], anton);
     return;
   }
   // --- АНТОН, лак сдаём ---
-  if(ant && player.inventory.includes('лак') && player.at==ant.at){
-    showEventNPC(randDialog(ant), [{text:'OK',action:()=>{
-      player.inventory = player.inventory.filter(x=>x!=='лак');
-      player.quests.lak='done';
-      renderAll();
-    }}], ant);
+  if (anton && player.inventory.includes('лак') && player.at === anton.at) {
+    showEventNPC(randDialog(anton), [{
+      text: 'OK',
+      action: () => {
+        player.inventory = player.inventory.filter(x => x !== 'лак');
+        player.quests.lak = 'done';
+        renderAll();
+      }
+    }], anton);
     return;
   }
+
   // --- БОСС Виктор ---
-  let boss = npcs.find(x=>x._spawned && x.name==='Виктор');
-  if(boss && player.at==boss.at){
-    if(player.quests.proba==='done'&&player.quests.lak==='done'){
-      startQuizBOSS(boss);
+  const viktor = getNPC('Виктор');
+  if (viktor && player.at === viktor.at) {
+    if (player.quests.proba === 'done' && player.quests.lak === 'done') {
+      startQuizBOSS(viktor);
       return;
     } else {
-      showEventNPC('Виктор: “Ты не всё сделал.<br>Где цветопроба и лак?” (вернуться!)',[{text:'Ушел',action:()=>{player.stress+=8;}}],boss);
+      showEventNPC(
+        'Виктор: “Ты не всё сделал.<br>Где цветопроба и лак?” (вернуться!)',
+        [{ text: 'Ушел', action: () => { player.stress += 8; } }],
+        viktor
+      );
       return;
     }
   }
 }
 
+
+
 // ==== МОДАЛКА ДИАЛОГА С ФОТО NPC ===
-function showEventNPC(text, opts, npc){
-  dialogOpen = true;
-  player.busy = true;
+
+/**
+ * Показать модальное окно события/диалога с портретом NPC
+ * @param {string} text — основной текст
+ * @param {Array} opts — массив опций-кнопок: [{text, action: function}]
+ * @param {object} npc — NPC, для портрета (необязательно)
+ */
+function showEventNPC(text, opts, npc) {
+  gameState.dialogOpen = true;
+  gameState.player.busy = true;
   document.getElementById('eventBox').style.display = 'block';
-  if(npc && npc.portrait){
-    document.getElementById('eventPortrait').innerHTML = `<img src="${npc.portrait}" alt="${npc.name}" style="max-width:130px;max-height:130px;border-radius:15px;box-shadow:0 2px 18px #4689ff27;margin:6px auto 9px auto;display:block;">`;
+
+  if (npc && npc.portrait) {
+    document.getElementById('eventPortrait').innerHTML =
+      `<img src="${npc.portrait}" alt="${npc.name}" style="max-width:130px;max-height:130px;border-radius:15px;box-shadow:0 2px 18px #4689ff27;margin:6px auto 9px auto;display:block;">`;
   } else {
     document.getElementById('eventPortrait').innerHTML = "";
   }
+
   document.getElementById('eventText').innerHTML = text;
-  let html = '';
-  opts.forEach((o,i)=>{ html+=`<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`; });
-  document.getElementById('eventOptions').innerHTML = html;
-  window._eventOpts = opts;
+
+  document.getElementById('eventOptions').innerHTML = opts.map((o, i) =>
+    `<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`
+  ).join('');
+  window._eventOpts = opts; // Можно перенести в gameState, если глобал-область не желательна
 }
-function showEvent(text, opts){
-  dialogOpen = true;
-  player.busy = true;
+
+/**
+ * Показать простое диалоговое окно (без портрета)
+ */
+function showEvent(text, opts) {
+  gameState.dialogOpen = true;
+  gameState.player.busy = true;
   document.getElementById('eventBox').style.display = 'block';
   document.getElementById('eventPortrait').innerHTML = "";
   document.getElementById('eventText').innerHTML = text;
-  let html = '';
-  opts.forEach((o,i)=>{ html+=`<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`; });
-  document.getElementById('eventOptions').innerHTML = html;
+  document.getElementById('eventOptions').innerHTML = opts.map((o, i) =>
+    `<button class="actionBtn" onclick="eventAction(${i})">${o.text}</button>`
+  ).join('');
   window._eventOpts = opts;
 }
-window.eventAction=function(idx){
-  document.getElementById('eventBox').style.display='none';
-  let fn=window._eventOpts[idx];
-  if(typeof fn==='object'&&fn.action) fn=fn.action;
-  if(typeof fn==='function') fn();
-  player.busy=false;
-  dialogOpen = false;
+
+/**
+ * Обработчик действия по нажатию кнопки в модалке
+ */
+window.eventAction = function(idx) {
+  document.getElementById('eventBox').style.display = 'none';
+  if (!window._eventOpts) return;
+  const opt = window._eventOpts[idx];
+  if (opt && typeof opt.action === 'function') opt.action();
+  gameState.player.busy = false;
+  gameState.dialogOpen = false;
   renderAll();
 };
+
+
 
 // Блиц от босса -- не изменяется, см. твой исходник выше
 
@@ -613,8 +878,7 @@ function shuffle(array) {
   return arr;
 }
 
-// ...остальной код startQuizBOSS, legendOpen, legendClose -- как выше...
-
+// Блиц от босса / Boss Quiz
 function startQuizBOSS(bossNpc){
   let questions = shuffle(BOSS_QUIZ.slice());
   let cur = 0;
@@ -623,12 +887,12 @@ function startQuizBOSS(bossNpc){
 
   function failQuiz(){
     if(timer) clearInterval(timer);
-    player.quests.boss = false;
-    quizInProgress = false;
+    gameState.player.quests.boss = false;
+    gameState.quizInProgress = false;
     // Перемещаем игрока обратно из кабинета босса
-    if(lastRoomBeforeBoss !== null) {
-      player.at = lastRoomBeforeBoss;
-      lastRoomBeforeBoss = null;
+    if(gameState.lastRoomBeforeBoss !== null && typeof gameState.lastRoomBeforeBoss !== 'undefined') {
+      gameState.player.at = gameState.lastRoomBeforeBoss;
+      gameState.lastRoomBeforeBoss = null;
     }
     renderAll();
     showEvent(
@@ -639,9 +903,9 @@ function startQuizBOSS(bossNpc){
 
   function winQuiz(){
     if(timer) clearInterval(timer);
-    player.quests.boss = 'done';
-    player.end = true;
-    quizInProgress = false;
+    gameState.player.quests.boss = 'done';
+    gameState.player.end = true;
+    gameState.quizInProgress = false;
     renderAll();
     setTimeout(()=>{
       showEventNPC(
@@ -654,9 +918,9 @@ function startQuizBOSS(bossNpc){
   }
 
   function showQ() {
-    if(timer) clearInterval(timer); // стоп, если вдруг запущен был ранее
+    if(timer) clearInterval(timer); // стоп
     isAnswered = false;
-    if(cur >= 7) return winQuiz(); // 7 верных подряд = победа
+    if(cur >= 7) return winQuiz();
 
     let timeLeft = 10;
     let q = questions[cur], vars = shuffle(q.answers.slice());
@@ -694,6 +958,8 @@ function startQuizBOSS(bossNpc){
 
   showQ();
 }
+
+
 
 // --- Блиц вопросы Виктора
 const BOSS_QUIZ = [
@@ -763,15 +1029,7 @@ const BOSS_QUIZ = [
 ];
 
 
-
-function shuffle(array) {
-  let arr = array.slice();
-  for (let i = arr.length - 1; i > 0; i--) {
-    let j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
+// --- Блиц-викторина с боссом
 function startQuizBOSS(bossNpc){
   let questions = shuffle(BOSS_QUIZ.slice());
   let cur = 0;
@@ -780,15 +1038,15 @@ function startQuizBOSS(bossNpc){
 
   function failQuiz(){
     if(timer) clearInterval(timer);
-    player.quests.boss = false; // сброс квеста!
-    player.end = false;
-    dialogOpen = true;
-    player.busy = true;
+    gameState.player.quests.boss = false; // сброс квеста!
+    gameState.player.end = false;
+    gameState.dialogOpen = true;
+    gameState.player.busy = true;
     showEventNPC(
-      `Ты ошибся или не успел!<br>Готов попробовать снова?`, 
+      `Ты ошибся или не успел!<br>Готов попробовать снова?`,
       [{text:'Попробовать заново', action:()=> {
-        dialogOpen = false;
-        player.busy = false;
+        gameState.dialogOpen = false;
+        gameState.player.busy = false;
         startQuizBOSS(bossNpc);
       }}],
       bossNpc
@@ -797,10 +1055,10 @@ function startQuizBOSS(bossNpc){
 
   function winQuiz(){
     if(timer) clearInterval(timer);
-    player.quests.boss = 'done';
-    player.end = true;
-    dialogOpen = true;
-    player.busy = true;
+    gameState.player.quests.boss = 'done';
+    gameState.player.end = true;
+    gameState.dialogOpen = true;
+    gameState.player.busy = true;
     showEventNPC(
       `Виктор: “Поздравляю! Всё правильно! Рабочий день завершён.<br>
       <b>Ты выиграл! 🏆</b>”`,
@@ -810,9 +1068,9 @@ function startQuizBOSS(bossNpc){
   }
 
   function showQ() {
-    if(timer) clearInterval(timer); // стоп, если вдруг запущен был ранее
+    if(timer) clearInterval(timer);
     isAnswered = false;
-    if(cur >= 7) return winQuiz(); // 7 верных подряд = победа
+    if(cur >= 7) return winQuiz();
 
     let timeLeft = 10;
     let q = questions[cur], vars = shuffle(q.answers.slice());
@@ -850,10 +1108,13 @@ function startQuizBOSS(bossNpc){
 
   showQ();
 }
+
 // ============= СПРАВКА/ЛЕГЕНДА ==============
 function legendOpen(){
   let html = "<b>Локации:</b><ul>";
-  ROOMS.forEach(r=>{html+=`<li><b>${r.name}</b> ${r.icon}: <span class='actor-desc'>${r.desc}</span></li>`;});
+  ROOMS.forEach(r=>{
+    html+=`<li><b>${r.name}</b> ${r.icon}: <span class='actor-desc'>${r.desc}</span></li>`;
+  });
   html += "</ul><b>Персонажи:</b><ul>";
   NPCS_FULL.forEach(n=>{
     html+=`<li>${n.icon}<b> ${n.name}</b>: <span class='actor-desc'>${n.desc}</span></li>`;
@@ -865,6 +1126,9 @@ function legendOpen(){
 function legendClose(){
   document.getElementById("descModal").style.display='none';
 }
-// ============= СТАРТ ===========
-window.onload=()=>{resetGame();};
 
+// --- Старт ---
+window.onload = () => {
+  document.getElementById('eventBox').style.display = 'none';
+  resetGame();
+};
