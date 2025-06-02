@@ -1,11 +1,13 @@
 // game.state.js
+
+// Глобальное состояние игры
 let player = {};
 let npcs = [];
 let dialogOpen = false;
 let nlooper = null;
 
-// Клонирование, рандом
-function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+// Утилиты для других модулей (pure, без данных)
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
 function shuffle(array) {
   let arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -14,12 +16,13 @@ function shuffle(array) {
   }
   return arr;
 }
-function randDialog(npc){
-  let rnd = Math.random()*100;
-  if(rnd < npc.prob3) return npc.dialog3;
-  if(rnd < npc.prob3 + npc.prob2) return npc.dialog2;
+function randDialog(npc) {
+  let rnd = Math.random() * 100;
+  if (rnd < npc.prob3) return npc.dialog3;
+  if (rnd < npc.prob3 + npc.prob2) return npc.dialog2;
   return npc.dialog1;
 }
-function stopLoop(){
-  if(nlooper) clearInterval(nlooper); nlooper=null;
+function stopLoop() {
+  if (nlooper) clearInterval(nlooper);
+  nlooper = null;
 }
