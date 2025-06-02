@@ -46,15 +46,28 @@ function renderQuests(){
  */
 function renderControls(){
   let html = '';
-  let here = player.at, doors = ROOMS[here].doors;
+  let here = player.at;
+  let doors = ROOMS[here].doors;
   doors.forEach(idx => {
-    const npcsHere = npcs.filter(n => n.at === idx).length;
-    if(npcsHere + 1 > 3){
+    // Своя ли эта комната для игрока
+    const isOwnRoom = player.home && Array.isArray(player.home) && player.home.includes(idx);
+    let disabled = false;
+    if (!isOwnRoom) {
+      // Считаем только "гостей": NPC, которые тут не home и не boss
+      const npcsHere = npcs.filter(n => {
+        if (n.home && Array.isArray(n.home) && n.home.includes(idx)) return false;
+        if (n.type === 'boss') return false;
+        return n.at === idx;
+      }).length;
+      if (npcsHere + 1 > 3) disabled = true;
+    }
+    if (disabled) {
       html += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;
     } else {
       html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
     }
   });
+  // Спецдействия
   if(ROOMS[here].name==='Аквариум' && !player.inventory.includes('цветопроба') && player.quests.proba==='inprogress'){
     html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;
   }
