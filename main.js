@@ -467,73 +467,76 @@ window.eventAction=function(idx){
   renderAll();
 };
 
-// ============== БЛИЦ ВИКТОРИНА =================
 
+// --- Блиц вопросы Виктора
 const BOSS_QUIZ = [
   {
     question: "Что означает C в аббревиатуре CMYK?",
     answers: [
-      {text: "Циан (голубой)", correct: true},
-      {text: "Картон", correct: false},
-      {text: "Цвет", correct: false},
-      {text: "Контур", correct: false}
+      { text: "C = Циан", correct: true },
+      { text: "C = Color", correct: false },
+      { text: "C = Синий", correct: false },
+      { text: "C = Contour", correct: false }
     ]
   },
   {
     question: "Что такое Pantone?",
     answers: [
-      {text: "Спецпалитра для подбора фирменных цветов", correct: true},
-      {text: "Плотность бумаги", correct: false},
-      {text: "Тип лака", correct: false},
-      {text: "Вид резки", correct: false}
+      { text: "Спецпалитра для подбора фирменных цветов", correct: true },
+      { text: "Международный стандарт цветопередачи для печати", correct: false },
+      { text: "Цветовая гамма для производства дизайнерской бумаги", correct: false },
+      { text: "Таблица оттенков для выбора лаковых покрытий", correct: false }
     ]
   },
   {
     question: "Что важно для вывода макета в печать?",
     answers: [
-      {text: "CMYK, обрезные метки, без прозрачностей", correct: true},
-      {text: "PNG с тенью", correct: false},
-      {text: "Только PNG", correct: false},
-      {text: "RGB, как на экране", correct: false}
+      { text: "CMYK, обрезные метки, без прозрачностей", correct: true },
+      { text: "Выпуски под обрез, цветовые профили, без обводок", correct: false },
+      { text: "CMYK, оригинальное разрешение, с тенями и белым фоном", correct: false },
+      { text: "Выпуски под обрез, режущие линии, без прозрачностей", correct: false }
     ]
   },
   {
     question: "Что такое допечатная подготовка?",
     answers: [
-      {text: "Проверка и настройка макета перед печатью", correct: true},
-      {text: "Очистка станков", correct: false},
-      {text: "Выбор лака", correct: false},
-      {text: "Забор коробок", correct: false}
+      { text: "Проверка и настройка макета перед печатью", correct: true },
+      { text: "Настройка параметров бумаги и резки для печати", correct: false },
+      { text: "Определение формата макета и типа лака", correct: false },
+      { text: "Проверка цветопередачи и выпусков под обрез", correct: false }
     ]
   },
   {
     question: "Почему PDF предпочтительнее для офсетной печати?",
     answers: [
-      {text: "Корректно сохраняет вектор и шрифты", correct: true},
-      {text: "Сохраняет прозрачности", correct: false},
-      {text: "Меньше весит", correct: false},
-      {text: "Дешевле распечатывать", correct: false}
+      { text: "Корректно сохраняет вектор и шрифты", correct: true },
+      { text: "Поддерживает цветовые профили и макеты", correct: false },
+      { text: "Удобно сохраняет прозрачности и отступы", correct: false },
+      { text: "Сохраняет все макеты без искажений", correct: false }
     ]
   },
   {
     question: "Зачем нужны плашечные цвета?",
     answers: [
-      {text: "Для согласования специальных фирменных оттенков", correct: true},
-      {text: "Для фотопечати", correct: false},
-      {text: "Для печати на картоне", correct: false},
-      {text: "Для лакировки", correct: false}
+      { text: "Для согласования специальных фирменных оттенков", correct: true },
+      { text: "Для имитации насыщенных теней и бликов", correct: false },
+      { text: "Для подбора точных цветовых смесей в макете", correct: false },
+      { text: "Для выделения отдельных элементов дизайна", correct: false }
     ]
   },
   {
     question: "Что такое лакировка?",
     answers: [
-      {text: "Нанесение защитного покрытия на тираж", correct: true},
-      {text: "Склеивание листов", correct: false},
-      {text: "Ламинация", correct: false},
-      {text: "Резка бумаги", correct: false}
+      { text: "Нанесение защитного покрытия на тираж", correct: true },
+      { text: "Покрытие отдельных элементов специальным составом", correct: false },
+      { text: "Создание матовой или глянцевой поверхности макета", correct: false },
+      { text: "Обработка отпечатка для повышения износостойкости", correct: false }
     ]
   }
 ];
+
+
+
 function shuffle(array) {
   let arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
