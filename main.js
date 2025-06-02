@@ -27,6 +27,7 @@ const NPCS_FULL = [
     home:[0,1],                 // рабочие комнаты
     workplace: 1,               // основная рабочая
     spawn: 0,                   // офис
+    spawnDelay: 5000 + Math.floor(Math.random() * 5001),
     moveInterval: 9000,         // 9 сек
     follow:false,
     dialog1:"Катя: Ау, ну сделай цветопробу.", prob1:60,
@@ -41,6 +42,7 @@ const NPCS_FULL = [
     home:[0,1],
     workplace: 0,
     spawn: 0,
+    spawnDelay: 6000 + Math.floor(Math.random() * 5001),
     moveInterval: 6000,       // 6 сек
     said:false,
     dialog1:"Светлана: Почему вы потеряли мои файлы! Просто ты должен это сделать!.", prob1:60,
@@ -54,6 +56,7 @@ const NPCS_FULL = [
     type:'neutral',
     home:[0,1,2],
     workplace: 2,
+    spawnDelay: 7000 + Math.floor(Math.random() * 5001),
     spawn: 0,
     moveInterval: 18000,       // 18 сек
     dialog1:"Владимир: я так понимаю мы в типографии?.", prob1:60,
@@ -67,6 +70,7 @@ const NPCS_FULL = [
     type:'tip',
     home:[2,1],
     workplace: 2,
+    spawnDelay: 8000 + Math.floor(Math.random() * 5001),
     spawn: 0,
     moveInterval: 36000,      // 36 сек
     said:false,
@@ -81,6 +85,7 @@ const NPCS_FULL = [
     type:'happy',
     home:[2,1,4],
     workplace: 2,
+    spawnDelay: 9000 + Math.floor(Math.random() * 5001),
     spawn: 0,
     moveInterval: 30000,      // 30 сек
     dialog1:"Саша Ха: давай кулак.", prob1:60,
@@ -95,6 +100,7 @@ const NPCS_FULL = [
     home:[4,5],
     workplace: 4,
     spawn: 0,
+    spawnDelay: 10000 + Math.floor(Math.random() * 5001),
     moveInterval: 12000,      // 12 сек
     dialog1:"Марина: Ты что еще тут? Пшёл от сюда!", prob1:60,
     dialog2:"Марина: ПРОСТО УЙДИ!", prob2:30,
@@ -108,6 +114,7 @@ const NPCS_FULL = [
     home:[4,5,8],
     workplace: 4,
     spawn: 0,
+    spawnDelay: 11000 + Math.floor(Math.random() * 5001),
     moveInterval: 12000,      // 12 сек
     dialog1:"Арсений: Давай я сделаю это быстрее.", prob1:60,
     dialog2:"Арсений: Привет", prob2:30,
@@ -121,6 +128,7 @@ const NPCS_FULL = [
     home:[4,5,8],
     workplace: 4,
     spawn: 0,
+    spawnDelay: 11000 + Math.floor(Math.random() * 5001),
     moveInterval: 6000,      // 6 сек — ЧАСТЫЕ перемещения
     dialog1:"Александр Кир: Вот в 1978 мы резали пленку ножницами, монтаж делали на воске, фотонабор на «Линотроне», краски вручную мешали, а контрольный оттиск проверял Иван Петрович лично.", prob1:40,
     dialog2:"Александр Кир: В 80-х мы на газетных ротациях химию сами замешивали, чтоб не пузырило, а тексты правили на прозрачных плёнках райтерами, потом всё сутки под прессом держали.", prob2:30,
@@ -134,6 +142,7 @@ const NPCS_FULL = [
     home:[4],
     workplace: 4,
     spawn: 0,
+    spawnDelay: 12000 + Math.floor(Math.random() * 5001),
     moveInterval: 12000,      // 12 сек
     dialog1:"Полина: Позовите Антона, у меня новые стрелки на лице!", prob1:60,
     dialog2:"Полина: Хаюшки", prob2:30,
@@ -147,6 +156,7 @@ const NPCS_FULL = [
     home:[9,8],
     workplace: 9,
     spawn: 0,
+    spawnDelay: 13000 + Math.floor(Math.random() * 5001),
     moveInterval: 9000,      // 9 сек
     dialog1:"Антон: Доброе утро, хорошего дня!", prob1:60,
     dialog2:"Антон: Ха-ха-ха, хи-хи-хи. Ладно я пошел на лак.", prob2:30,
@@ -159,7 +169,8 @@ const NPCS_FULL = [
     type:'boss',
     home:[12],               // кабинет босса
     workplace: 12,
-    spawn: 12,               // спавнится сразу в своей комнате
+    spawn: 0,               
+    spawnDelay: 14000 + Math.floor(Math.random() * 5001),
     moveInterval: 30000,     // 30 сек делает обход всех комнат
   }
 ];
@@ -188,15 +199,29 @@ function randDialog(npc){
 }  
 
 // ========== СТАРТ И СБРОС =========  
-function startGame(name) {  
-  player = {  
-    name: name.length?name:'Новичок', at:0, stress:0, inventory:[],  
-    busy:false, quests:{proba:false,lak:false,boss:false}, end:false  
-  };  
-  npcs = deepClone(NPCS_FULL);  
-  renderAll();  
-  startLoop();  
-}  
+function startGame(name) {
+  player = {
+    name: name.length ? name : 'Новичок',
+    at: 0, stress: 0, inventory: [],
+    busy: false, quests: { proba: false, lak: false, boss: false }, end: false
+  };
+
+  npcs = deepClone(NPCS_FULL).map((npc, idx) => {
+    let obj = { ...npc };
+    // Если spawnDelay не задан — сделать случайный от 10 до 20 сек
+    if (typeof obj.spawnDelay !== 'number') {
+      obj.spawnDelay = 10000 + Math.floor(Math.random() * 10001);
+    }
+    obj._moveTimer = null;
+    obj._spawned = false;
+    obj.at = typeof obj.spawn === "number" ? obj.spawn : 0;
+    return obj;
+  });
+
+  renderAll();
+  stopLoop();
+  startAllNpcSpawns();
+}
 
 function resetGame(){  
   let n = prompt("Ваше имя?","Новичок")||"Новичок";  
