@@ -184,33 +184,6 @@ function randDialog(npc){
   return npc.dialog1;  
 }  
 
-// ========== СТАРТ И СБРОС =========  
-function startGame(name) {  
-  player = {  
-    name: name.length ? name : 'Новичок',  
-    at: 0, stress: 0, inventory: [],  
-    busy: false, quests: { proba: false, lak: false, boss: false }, end: false  
-  };  
-
-  npcs = deepClone(NPCS_FULL).map((npc, idx) => {  
-    let obj = { ...npc };  
-    obj.spawnDelay = 10000 + Math.floor(Math.random() * 10001); // 10-20 сек для каждого  
-    obj._moveTimer = null;  
-    obj._spawned = false;  
-    obj.at = typeof obj.spawn === "number" ? obj.spawn : 0;  
-    return obj;  
-  });  
-
-  renderAll();  
-  startAllNpcSpawns();  
-}  
-
-function resetGame(){  
-  let n = prompt("Ваше имя?","Новичок")||"Новичок";  
-  document.getElementById('player-name').innerText = n;  
-  startGame(n);  
-}  
-
 // ============= СПАВН И ДВИЖЕНИЕ NPC ============  
 function startAllNpcSpawns() {  
   npcs.forEach((npc, idx) => {  
@@ -241,6 +214,34 @@ function startNpcMovement(npc) {
     npc.at = next;  
     renderAll();  
   }, interval);  
+}  
+
+
+// ========== СТАРТ И СБРОС =========  
+function startGame(name) {  
+  player = {  
+    name: name.length ? name : 'Новичок',  
+    at: 0, stress: 0, inventory: [],  
+    busy: false, quests: { proba: false, lak: false, boss: false }, end: false  
+  };  
+
+  npcs = deepClone(NPCS_FULL).map((npc, idx) => {  
+    let obj = { ...npc };  
+    obj.spawnDelay = 10000 + Math.floor(Math.random() * 10001); // 10-20 сек для каждого  
+    obj._moveTimer = null;  
+    obj._spawned = false;  
+    obj.at = typeof obj.spawn === "number" ? obj.spawn : 0;  
+    return obj;  
+  });  
+
+  renderAll();  
+  startAllNpcSpawns();  
+}  
+
+function resetGame(){  
+  let n = prompt("Ваше имя?","Новичок")||"Новичок";  
+  document.getElementById('player-name').innerText = n;  
+  startGame(n);  
 }  
 
 // ========== РЕНДЕРИНГ ==========  
