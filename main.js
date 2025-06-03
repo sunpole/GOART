@@ -484,31 +484,58 @@ function renderAll() {
   renderMap();
   renderQuests();
   renderControls();
+  renderFooter();
 }
+
+
+function renderFooter() {
+  // Соберём подвал: стресс, инвентарь и кнопка "Заново"
+  let stress = gameState.player.stress;
+  let inventory = gameState.player.inventory.length
+    ? gameState.player.inventory.join(', ')
+    : 'пусто';
+
+  let html = `
+    Стресс: ${stress} / 100
+    &nbsp;|&nbsp;
+    В руках: ${inventory}
+    &nbsp;|&nbsp;
+    <button onclick="resetGame()">Заново</button>
+  `;
+  document.getElementById('footer').innerHTML = html;
+}
+
 
 /**
  * Рендер визуальной карты (комнаты, игрок, NPC, двери)
  */
 function renderMap() {
   let html = '';
-  for(let i=0; i<ROOMS.length; ++i) {
+  for (let i = 0; i < ROOMS.length; ++i) {
     let active = (gameState.player.at === i) ? 'active' : '';
-    html += `<div class="room ${active}" title="${ROOMS[i].desc}">
-      <div class="room-title">${ROOMS[i].name} ${ROOMS[i].icon}</div>`;
+    // Проверяем, длинное ли название комнаты (для класса .long)
+    let longClass = ROOMS[i].name.length > 14 ? 'long' : '';
+    html += `<div class="room ${active}" title="${ROOMS[i].desc}">`;
+    html += `<div class="room-title ${longClass}">${ROOMS[i].icon} ${ROOMS[i].name}</div>`;
     html += `<div class="actors">`;
-    if(gameState.player.at === i)
-      html += `<span class="actor actor-ego" title="Это вы!">🧑‍💼<br><span class="actor-name">${gameState.player.name}</span></span>`;
-    gameState.npcs.filter(n=>n._spawned && n.at===i).forEach(npc=>{
-      html += `<span class="actor actor-npc" title="${npc.desc}">${npc.icon}<br><span class="actor-name">${npc.name}</span></span>`;
+    // Сначала игрок
+    if (gameState.player.at === i) {
+      let plNameClass = gameState.player.name.length > 11 ? 'long' : '';
+      html += `<span class="actor actor-ego" title="Это вы!">🧑‍💼
+      <span class="actor-name ${plNameClass}">${gameState.player.name}</span></span>`;
+    }
+    // Потом NPC
+    gameState.npcs.filter(n => n._spawned && n.at === i).forEach(npc => {
+      let npcNameClass = npc.name.length > 11 ? 'long' : '';
+      html += `<span class="actor actor-npc" title="${npc.desc}">${npc.icon}
+      <span class="actor-name ${npcNameClass}">${npc.name}</span></span>`;
     });
-    html += `</div><div class="doors">Двери: ${
-      ROOMS[i].doors.map(j=>ROOMS[j].name).join(', ')
-    }</div></div>`;
+    html += `</div>`;
+    // Двери (соседние комнаты) — ОСТАВЛЯЕМ!
+    html += `<div class="doors">Двери: ${ROOMS[i].doors.map(j => ROOMS[j].name).join(', ')}</div>`;
+    html += `</div>`;
   }
   document.getElementById('map').innerHTML = html;
-  document.getElementById('stressBar').innerText = gameState.player.stress;
-  document.getElementById('item').innerText = gameState.player.inventory.length
-    ? gameState.player.inventory.join(', ') : 'пусто';
 }
 
 /**
@@ -526,7 +553,7 @@ function renderQuests() {
 
 /**
  * Отрисовка кнопок управления перемещениями и действиями игрока
- */
+
 function renderControls() {
   let html = '';
   let here = gameState.player.at, doors = ROOMS[here].doors;
@@ -539,22 +566,77 @@ function renderControls() {
       html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
     }
   });
+ */
 
-  // Спец-действия для квестов и фаз игры
-  if(ROOMS[here].name === 'Аквариум' &&
-     !gameState.player.inventory.includes('цветопроба') &&
-     gameState.player.quests.proba === 'inprogress') {
-    html += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;
+function renderFooter() {
+  let stress = gameState.player.stress;
+  let inventory = gameState.player.inventory.length
+    ? gameState.player.inventory.join(', ')
+    : 'пусто';
+
+  // Кнопки переходов
+  let controls = '';
+  let here = gameState.player.at, doors = ROOMS[here].doors;
+  doors.forEach(idx => {
+    const npcsHere = gameState.npcs.filter(n => n._spawned && n.at === idx).length;
+    const roomLimit = ROOMS[idx].limit || 3;
+    if(npcsHere + 1 > roomLimit) {
+      controls += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;
+    } else {
+      controls += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
+    }
+  });
+function renderFooter() {
+  let stress = gameState.player.stress;
+  let inventory = gameState.player.inventory.length
+    ? gameState.player.inventory.join(', ')
+    : 'пусто';
+
+  // Кнопки переходов
+  let controls = '';
+  let here = gameState.player.at, doors = ROOMS[here].doors;
+  doors.forEach(idx => {
+    const npcsHere = gameState.npcs.filter(n => n._spawned && n.at === idx).length;
+    const roomLimit = ROOMS[idx].limit || 3;
+    if (npcsHere + 1 > roomLimit) {
+      controls += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;
+    } else {
+      controls += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
+    }
+  });
+
+  // Квестовые action-кнопки
+  if (ROOMS[here].name === 'Аквариум' &&
+      !gameState.player.inventory.includes('цветопроба') &&
+      gameState.player.quests.proba === 'inprogress') {
+    controls += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;
   }
-  if(ROOMS[here].name === 'Лак' &&
-     !gameState.player.inventory.includes('лак') &&
-     gameState.player.quests.proba === 'done') {
-    html += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;
+  if (ROOMS[here].name === 'Лак' &&
+      !gameState.player.inventory.includes('лак') &&
+      gameState.player.quests.proba === 'done') {
+    controls += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;
   }
-  document.getElementById('control-panel').innerHTML = html;
+
+  // Квест-лог: компактно, одной строкой
+  let quests = QUESTS.map(qk =>
+    `${qk.name}:${gameState.player.quests[qk.id] === 'done' ? '✅'
+    : (gameState.player.quests[qk.id] ? '🕓' : '❌')}`
+  ).join(' | ');
+
+  // Итоговый html для footer
+  let html = `
+    Стресс: ${stress} / 100
+    &nbsp;|&nbsp;
+    В руках: ${inventory}
+    &nbsp;|&nbsp;
+    <button onclick="resetGame()">Заново</button>
+    <br>
+    ${controls}
+    <br>
+    <span style="color:#3c5992; font-size:.92em">Квесты: ${quests}</span>
+  `;
+  document.getElementById('footer').innerHTML = html;
 }
-
-
 
 // -------------- ПРОЧИЕ ФУНКЦИИ И ЛОГИКА -----------  
 
@@ -602,7 +684,6 @@ function kickNpcsFromRoom(roomIdx) {
     }
   });
 }
-
 
 
 
