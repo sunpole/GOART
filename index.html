@@ -9,11 +9,8 @@
       --header-height: 40px;
       --footer-height: 50px;
     }
-    /* Базовые стили обнуления */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: sans-serif; background: #e2e7ed; min-height: 100vh; }
-
-    /* Фиксированная шапка */
     #header {
       position: fixed; top: 0; left: 0; right: 0;
       height: var(--header-height);
@@ -25,8 +22,6 @@
       transition: height 0.2s, font-size 0.2s;
       box-shadow: 0 2px 10px #0001;
     }
-
-    /* Фиксированный подвал */
     #footer {
       position: fixed; left: 0; right: 0; bottom: 0;
       height: var(--footer-height);
@@ -37,27 +32,22 @@
       border-top: 1px solid #b5bac4;
       box-shadow: 0 -2px 12px #abc3dc21;
       transition: height 0.2s, font-size 0.2s;
+      flex-direction: column;
     }
-
-    /* Основное тело между ними */
     #main-wrap {
-      position: absolute; /* или fixed если не используешь скролл страницы */
+      position: absolute;
       top: var(--header-height);
-      left: 0; 
-      right: 0; 
-      bottom: var(--footer-height);
+      left: 0; right: 0; bottom: var(--footer-height);
       padding: 8px 0;
       overflow-y: auto;
-      background: none; /* или цвет/картинка, если нужно */
+      background: none;
       display: flex;
       justify-content: center;
       align-items: flex-start;
     }
-
-    /* Сетка комнат */
     #map {
       display: grid;
-      grid-template-columns: repeat(4, 1fr); /* Для десктопа */
+      grid-template-columns: repeat(4, 1fr);
       grid-gap: 8px;
       padding: 10px;
       width: 100vw;
@@ -76,63 +66,22 @@
       padding: 7px 6px 6px 6px;
       word-break: break-word;
     }
-    .room .room-title {
-      font-weight: 700;
-      font-size: 1.05em;
-      margin-bottom: 3px;
-      line-height: 1.2;
-      overflow-wrap: break-word;
-    }
-    .actors {
-      margin-top: 5px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2px 4px;
-      min-height: 28px;
-    }
-    .actor {
-      display: flex; flex-direction: column; align-items: center;
-      font-size: 1.4em; /* Эмодзи — масштабируются */
-      margin-right: 5px;
-      min-width: 0;
-      max-width: 60px;
-      overflow: hidden;
-      word-break: keep-all;
-    }
-    .actor-name {
-      font-size: 0.72em;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 54px;
-      text-align: center;
-      white-space: normal;
-    }
-    /* Для длинных названий: уменьшить шрифт */
+    .room .room-title { font-weight: 700; font-size: 1.05em; margin-bottom: 3px; line-height: 1.2; overflow-wrap: break-word;}
+    .actors { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 2px 4px; min-height: 28px; }
+    .actor { display: flex; flex-direction: column; align-items: center; font-size: 1.4em; margin-right: 5px; min-width: 0; max-width: 60px; overflow: hidden; word-break: keep-all; }
+    .actor-name { font-size: 0.72em; overflow: hidden; text-overflow: ellipsis; max-width: 54px; text-align: center; white-space: normal; }
     .room .room-title.long { font-size: 0.97em; }
     .actor .actor-name.long { font-size: 0.57em; }
-    /* Всегда видимая рамка active */
     .room.active { box-shadow: 0 0 8px #41b7fc88; }
-
-    /* --- АДАПТИВ --- */
-    @media (max-width: 760px) {
-      #map { max-width: 99vw; }
-    }
+    @media (max-width: 760px) { #map { max-width: 99vw; } }
     @media (max-width: 650px) {
-      :root {
-        --header-height: 36px; --footer-height: 40px;
-      }
+      :root { --header-height: 36px; --footer-height: 40px; }
       #header, #footer { font-size: 0.93em; }
-      #map {
-        grid-template-columns: repeat(2, 1fr); /* Таблица 2 столбца */
-        grid-template-rows: repeat(7, 1fr);
-        padding: 4px;
-      }
+      #map { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(7, 1fr); padding: 4px;}
       .room { min-height: 60px; font-size: 0.96em; }
     }
     @media (max-width: 450px) {
-      :root {
-        --header-height: 20px; --footer-height: 30px;
-      }
+      :root { --header-height: 20px; --footer-height: 30px; }
       #header, #footer { font-size: 0.8em; }
       #main-wrap { top: var(--header-height); bottom: var(--footer-height);}
       #map { grid-gap: 3px; }
@@ -142,11 +91,45 @@
       .actor { font-size: 1.1em; }
       .actor-name { font-size: 9px; max-width: 38vw;}
     }
-    /* Смещаем основные элементы вверх при маленькой высоте экрана */
-    @media (max-height: 420px) {
-      #main-wrap { padding: 2px 0; }
-      .room { min-height: 44px; }
+    @media (max-height: 420px) { #main-wrap { padding: 2px 0; } .room { min-height: 44px; } }
+    /* -- Модальное окно -- */
+    #eventBox {
+      display: none;
+      position: fixed;
+      z-index: 500;
+      left: 0; right: 0; top: 0; bottom: 0;
+      background: rgba(40, 62, 86, 0.16);
+      align-items: center; justify-content: center;
     }
+    #eventBox > div, #eventBox > img {
+      margin: 0 auto;
+    }
+    #eventPortrait { text-align:center; margin:2px 0 8px 0; }
+    #eventText { min-width:220px; text-align:center; font-size:1.08em; margin-bottom:12px;}
+    #eventOptions { display:flex; flex-wrap:wrap; gap:7px; justify-content:center;}
+    .actionBtn, .moveBtn {
+      font: inherit; border: none; border-radius: 7px; padding: 3px 12px;
+      cursor: pointer; background: #2d77c9; color: #fff;
+      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+      box-shadow: 0 1px 3px #87b1db38;
+      margin: 2px;
+    }
+    .moveBtn[disabled] { background: #c4cbe2; color: #f7f7ff; cursor: not-allowed; }
+    .actionBtn { background: #58aa81;}
+    .actionBtn:hover, .moveBtn:hover:enabled { background: #143967; }
+    /* Квест-лог */
+    #questlog ul { padding-left:10px }
+    .actor-desc { color: #6c789e; font-size: .9em;}
+    /* Окно справки/легенды */
+    #descModal {
+      display: none;
+      position:fixed; z-index:999; left:0; right:0; top:0; bottom:0;
+      background:rgba(235,245,255,0.99); gap:0; align-items: start; justify-content: center;
+    }
+    #legendCont { background:#fafcff; border-radius:15px; margin:40px auto; max-width:415px; font-size:0.98em; color:#123656;padding:24px 24px 14px 24px; box-shadow:0 2px 32px #4689ff1f;}
+    #legendCont h2 { margin-bottom: 8px; }
+    #legendCont ul { margin-bottom: 8px;}
+    #legendCont li { margin-bottom: 5px;}
   </style>
 </head>
 <body>
@@ -154,24 +137,30 @@
     🚀 Рабочий день в типографии
   </div>
   <div id="main-wrap">
-    <div id="map">
-      <!-- Пример генерации с помощью js:
-      <div class="room">
-        <div class="room-title">Офис продаж</div>
-        <div class="actors">
-          <span class="actor"><span>👩‍💼</span><span class="actor-name">Марина</span></span>
-          <span class="actor"><span>🧑‍💻</span><span class="actor-name">Игрок</span></span>
-        </div>
-      </div>
-      ... (14-15 дивов-комнат)
-      -->
+    <div style="flex:1;">
+      <div id="map"></div>
+      <div style="margin:14px 0 12px 0;" id="questlog"><ul></ul></div>
+      <button onclick="legendOpen()" style="margin:4px 0 20px 0; padding: 4px 18px">Справка (локации/персонажи)</button>
     </div>
   </div>
-  <div id="footer">
-    Стресс: 0 / 100 &nbsp;|&nbsp; <button>Заново</button>
+  <div id="footer"></div>
+
+  <!-- Модальное окно событий/диалогов -->
+  <div id="eventBox">
+    <div id="eventPortrait"></div>
+    <div id="eventText"></div>
+    <div id="eventOptions"></div>
   </div>
 
-<script src="main.js"></script>
-  
+  <!-- Справка/легенда -->
+  <div id="descModal">
+    <div id="legendCont">
+      <h2>Справка</h2>
+      <!-- Контент генерируется через JS -->
+      <button onclick="legendClose()" style="margin:12px auto 4px auto; min-width:80px;">Закрыть</button>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
 </body>
 </html>
