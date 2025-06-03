@@ -551,41 +551,6 @@ function renderQuests() {
   document.getElementById('questlog').innerHTML = "<ul>" + q + "</ul>";
 }
 
-/**
- * Отрисовка кнопок управления перемещениями и действиями игрока
-
-function renderControls() {
-  let html = '';
-  let here = gameState.player.at, doors = ROOMS[here].doors;
-  doors.forEach(idx => {
-    const npcsHere = gameState.npcs.filter(n => n._spawned && n.at === idx).length;
-    const roomLimit = ROOMS[idx].limit || 3;
-    if(npcsHere + 1 > roomLimit) {
-      html += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;
-    } else {
-      html += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
-    }
-  });
- */
-
-function renderFooter() {
-  let stress = gameState.player.stress;
-  let inventory = gameState.player.inventory.length
-    ? gameState.player.inventory.join(', ')
-    : 'пусто';
-
-  // Кнопки переходов
-  let controls = '';
-  let here = gameState.player.at, doors = ROOMS[here].doors;
-  doors.forEach(idx => {
-    const npcsHere = gameState.npcs.filter(n => n._spawned && n.at === idx).length;
-    const roomLimit = ROOMS[idx].limit || 3;
-    if(npcsHere + 1 > roomLimit) {
-      controls += `<button class="moveBtn" disabled style="opacity:.5;cursor:not-allowed;">В ${ROOMS[idx].name} ${ROOMS[idx].icon} (переполнено)</button>`;
-    } else {
-      controls += `<button class="moveBtn" onclick="moveTo(${idx})">В ${ROOMS[idx].name} ${ROOMS[idx].icon}</button>`;
-    }
-  });
 function renderFooter() {
   let stress = gameState.player.stress;
   let inventory = gameState.player.inventory.length
@@ -606,14 +571,18 @@ function renderFooter() {
   });
 
   // Квестовые action-кнопки
-  if (ROOMS[here].name === 'Аквариум' &&
-      !gameState.player.inventory.includes('цветопроба') &&
-      gameState.player.quests.proba === 'inprogress') {
+  if (
+    ROOMS[here].name === 'Аквариум' &&
+    !gameState.player.inventory.includes('цветопроба') &&
+    gameState.player.quests.proba === 'inprogress'
+  ) {
     controls += `<button class="actionBtn" onclick="makeProba()">Сделать цветопробу</button>`;
   }
-  if (ROOMS[here].name === 'Лак' &&
-      !gameState.player.inventory.includes('лак') &&
-      gameState.player.quests.proba === 'done') {
+  if (
+    ROOMS[here].name === 'Лак' &&
+    !gameState.player.inventory.includes('лак') &&
+    gameState.player.quests.proba === 'done'
+  ) {
     controls += `<button class="actionBtn" onclick="makeLak()">Сделать лак</button>`;
   }
 
