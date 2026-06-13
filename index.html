@@ -3,154 +3,207 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GOART v0.1.4 — Рабочий день в типографии</title>
+  <title>GOART v0.2.0-stable — Рабочий день в типографии</title>
   <style>
     :root {
-      --header-height: 40px;
-      --footer-height: 50px;
+      --header-height: 44px;
+      --footer-height: 118px;
+      --bg: #e2e7ed;
+      --panel: #f8fafc;
+      --room: #f3f5fa;
+      --line: #b5bac4;
+      --blue: #2a5b9d;
+      --blue-2: #2d77c9;
+      --green: #58aa81;
+      --text: #123656;
+      --muted: #6c789e;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: sans-serif; background: #e2e7ed; min-height: 100vh; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; min-height: 100%; }
+    body { font-family: Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    button { font: inherit; }
+
     #header {
       position: fixed; top: 0; left: 0; right: 0;
-      height: var(--header-height);
-      background: #2a5b9d; color: #fff;
-      display: flex; align-items: center;
-      justify-content: center;
-      z-index: 100;
-      font-size: 1em;
-      transition: height 0.2s, font-size 0.2s;
-      box-shadow: 0 2px 10px #0001;
-    }
-    #footer {
-      position: fixed; left: 0; right: 0; bottom: 0;
-      height: var(--footer-height);
-      background: #f8fafc; color: #2a5b9d;
+      min-height: var(--header-height);
+      background: var(--blue); color: #fff;
       display: flex; align-items: center; justify-content: center;
       z-index: 100;
-      font-size: 1em;
-      border-top: 1px solid #b5bac4;
-      box-shadow: 0 -2px 12px #abc3dc21;
-      transition: height 0.2s, font-size 0.2s;
-      flex-direction: column;
+      font-size: 1em; font-weight: 700;
+      text-align: center;
+      padding: 8px 10px;
+      box-shadow: 0 2px 10px #0001;
     }
+
     #main-wrap {
       position: absolute;
-      top: var(--header-height);
-      left: 0; right: 0; bottom: var(--footer-height);
-      padding: 8px 0;
+      top: var(--header-height); left: 0; right: 0; bottom: var(--footer-height);
+      padding: 8px 8px 12px;
       overflow-y: auto;
-      background: none;
       display: flex;
       justify-content: center;
       align-items: flex-start;
     }
+    .content { width: 100%; max-width: 920px; }
+
     #map {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-gap: 8px;
-      padding: 10px;
-      width: 100vw;
-      max-width: 800px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
     }
     .room {
-      background: #f3f5fa;
-      border: 1.5px solid #b5bac4;
+      background: var(--room);
+      border: 1.5px solid var(--line);
       border-radius: 12px;
-      min-height: 80px;
+      min-height: 92px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
       justify-content: flex-start;
       overflow: hidden;
-      padding: 7px 6px 6px 6px;
+      padding: 8px 7px 7px;
       word-break: break-word;
+      box-shadow: 0 1px 6px #0000000d;
     }
-    .room .room-title { font-weight: 700; font-size: 1.05em; margin-bottom: 3px; line-height: 1.2; overflow-wrap: break-word;}
-    .actors { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 2px 4px; min-height: 28px; }
-    .actor { display: flex; flex-direction: column; align-items: center; font-size: 1.4em; margin-right: 5px; min-width: 0; max-width: 60px; overflow: hidden; word-break: keep-all; }
-    .actor-name { font-size: 0.72em; overflow: hidden; text-overflow: ellipsis; max-width: 54px; text-align: center; white-space: normal; }
-    .room .room-title.long { font-size: 0.97em; }
-    .actor .actor-name.long { font-size: 0.57em; }
-    .room.active { box-shadow: 0 0 8px #41b7fc88; }
-    @media (max-width: 760px) { #map { max-width: 99vw; } }
-    @media (max-width: 650px) {
-      :root { --header-height: 36px; --footer-height: 40px; }
-      #header, #footer { font-size: 0.93em; }
-      #map { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(7, 1fr); padding: 4px;}
-      .room { min-height: 60px; font-size: 0.96em; }
+    .room.active {
+      border-color: #41b7fc;
+      box-shadow: 0 0 0 2px #41b7fc33, 0 0 12px #41b7fc88;
+      background: #ffffff;
     }
-    @media (max-width: 450px) {
-      :root { --header-height: 20px; --footer-height: 30px; }
-      #header, #footer { font-size: 0.8em; }
-      #main-wrap { top: var(--header-height); bottom: var(--footer-height);}
-      #map { grid-gap: 3px; }
-      .room { padding: 2px 2px 2px 2px;}
-      .room .room-title { font-size: 0.86em;}
-      .actors { min-height: 18px; }
-      .actor { font-size: 1.1em; }
-      .actor-name { font-size: 9px; max-width: 38vw;}
+    .room-title { font-weight: 700; font-size: 1.02em; margin-bottom: 4px; line-height: 1.2; overflow-wrap: break-word; }
+    .room-title.long { font-size: .92em; }
+    .actors { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px 5px; min-height: 32px; }
+    .actor { display: flex; flex-direction: column; align-items: center; font-size: 1.35em; min-width: 38px; max-width: 64px; overflow: hidden; }
+    .actor-name { font-size: .68em; overflow: hidden; text-overflow: ellipsis; max-width: 62px; text-align: center; white-space: normal; line-height: 1.1; }
+    .actor-name.long { font-size: .55em; }
+    .actor-ego { color: #0a4b8e; font-weight: 700; }
+    .doors { margin-top: auto; color: var(--muted); font-size: .76em; line-height: 1.15; }
+
+    #questlog {
+      margin: 12px 0 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd4df;
+      border-radius: 10px;
+      padding: 8px 10px;
+      box-shadow: 0 1px 8px #0000000a;
     }
-    @media (max-height: 420px) { #main-wrap { padding: 2px 0; } .room { min-height: 44px; } }
+    #questlog ul { margin: 0; padding-left: 18px; }
+    .actor-desc { color: var(--muted); font-size: .92em; }
+    .legend-open { margin: 4px 0 18px; padding: 6px 18px; border-radius: 8px; border: 1px solid #adc0d6; background: #fff; color: var(--blue); cursor: pointer; }
+
+    #footer {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      min-height: var(--footer-height);
+      background: var(--panel); color: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      font-size: .94em;
+      border-top: 1px solid var(--line);
+      box-shadow: 0 -2px 12px #abc3dc21;
+      flex-direction: column;
+      gap: 4px;
+      padding: 6px 8px 8px;
+      text-align: center;
+    }
+    .statusline, .questline { line-height: 1.25; }
+    .controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 960px; }
+
+    .actionBtn, .moveBtn {
+      border: none; border-radius: 8px; padding: 5px 10px;
+      cursor: pointer; background: var(--blue-2); color: #fff;
+      transition: background .18s, color .18s, box-shadow .18s;
+      box-shadow: 0 1px 3px #87b1db38;
+      margin: 1px;
+    }
+    .moveBtn[disabled] { background: #c4cbe2; color: #f7f7ff; cursor: not-allowed; }
+    .actionBtn { background: var(--green); }
+    .actionBtn:hover, .moveBtn:hover:enabled { background: #143967; }
+
     #eventBox {
       display: none;
       position: fixed;
       z-index: 500;
       left: 0; right: 0; top: 0; bottom: 0;
-      background: rgba(40, 62, 86, 0.16);
+      background: rgba(40, 62, 86, .22);
       align-items: center; justify-content: center;
+      padding: 18px;
     }
-    #eventBox > div, #eventBox > img { margin: 0 auto; }
-    #eventPortrait { text-align:center; margin:2px 0 8px 0; }
-    #eventText { min-width:220px; text-align:center; font-size:1.08em; margin-bottom:12px;}
-    #eventOptions { display:flex; flex-wrap:wrap; gap:7px; justify-content:center;}
-    .actionBtn, .moveBtn {
-      font: inherit; border: none; border-radius: 7px; padding: 3px 12px;
-      cursor: pointer; background: #2d77c9; color: #fff;
-      transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-      box-shadow: 0 1px 3px #87b1db38;
-      margin: 2px;
+    #eventBox[style*="block"] { display: flex !important; }
+    .event-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      max-width: 430px;
+      width: min(430px, 100%);
+      box-shadow: 0 12px 40px #14396738;
+      text-align: center;
     }
-    .moveBtn[disabled] { background: #c4cbe2; color: #f7f7ff; cursor: not-allowed; }
-    .actionBtn { background: #58aa81;}
-    .actionBtn:hover, .moveBtn:hover:enabled { background: #143967; }
-    #questlog ul { padding-left:10px }
-    .actor-desc { color: #6c789e; font-size: .9em;}
+    #eventPortrait { text-align:center; margin:2px 0 8px; }
+    #eventText { min-width:220px; text-align:center; font-size:1.08em; margin-bottom:12px; line-height: 1.35; }
+    #eventOptions { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; }
+
     #descModal {
       display: none;
       position:fixed; z-index:999; left:0; right:0; top:0; bottom:0;
-      background:rgba(235,245,255,0.99); gap:0; align-items: start; justify-content: center;
+      background:rgba(235,245,255,.99); align-items: flex-start; justify-content: center;
+      overflow-y: auto;
+      padding: 16px;
     }
-    #legendCont { background:#fafcff; border-radius:15px; margin:40px auto; max-width:415px; font-size:0.98em; color:#123656;padding:24px 24px 14px 24px; box-shadow:0 2px 32px #4689ff1f;}
-    #legendCont h2 { margin-bottom: 8px; }
-    #legendCont ul { margin-bottom: 8px;}
-    #legendCont li { margin-bottom: 5px;}
+    #legendCont { background:#fafcff; border-radius:15px; margin:24px auto; max-width:560px; width:100%; font-size:.98em; color:#123656; padding:24px; box-shadow:0 2px 32px #4689ff1f; }
+    #legendCont h2 { margin: 0 0 8px; }
+    #legendCont ul { margin: 6px 0 12px; padding-left: 20px; }
+    #legendCont li { margin-bottom: 5px; }
+
+    @media (max-width: 760px) {
+      :root { --footer-height: 132px; }
+      #map { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+      .room { min-height: 84px; }
+    }
+    @media (max-width: 560px) {
+      :root { --header-height: 40px; --footer-height: 158px; }
+      #header { font-size: .9em; }
+      #map { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+      .room { min-height: 76px; padding: 5px; }
+      .room-title { font-size: .9em; }
+      .actor { font-size: 1.15em; min-width: 34px; }
+      .actor-name { font-size: 9px; max-width: 48px; }
+      .doors { font-size: .68em; }
+      #footer { font-size: .82em; }
+      .actionBtn, .moveBtn { padding: 4px 7px; }
+    }
+    @media (max-height: 420px) {
+      :root { --header-height: 36px; --footer-height: 112px; }
+      #main-wrap { padding: 4px; }
+      .room { min-height: 54px; }
+      #questlog { display: none; }
+    }
   </style>
 </head>
 <body>
-  <div id="header">
-    🚀 GOART v0.1.4 — Рабочий день в типографии
-  </div>
+  <div id="header">🚀 GOART v0.2.0-stable — Рабочий день в типографии</div>
   <div id="main-wrap">
-    <div style="flex:1;">
+    <main class="content">
       <div id="map"></div>
-      <div style="margin:14px 0 12px 0;" id="questlog"><ul></ul></div>
-      <button onclick="legendOpen()" style="margin:4px 0 20px 0; padding: 4px 18px">Справка (локации/персонажи)</button>
-    </div>
+      <div id="questlog"><ul></ul></div>
+      <button class="legend-open" onclick="legendOpen()">Справка (локации/персонажи)</button>
+    </main>
   </div>
   <div id="footer"></div>
   <div id="eventBox">
-    <div id="eventPortrait"></div>
-    <div id="eventText"></div>
-    <div id="eventOptions"></div>
+    <div class="event-card">
+      <div id="eventPortrait"></div>
+      <div id="eventText"></div>
+      <div id="eventOptions"></div>
+    </div>
   </div>
   <div id="descModal">
     <div id="legendCont">
       <h2>Справка</h2>
-      <button onclick="legendClose()" style="margin:12px auto 4px auto; min-width:80px;">Закрыть</button>
+      <button onclick="legendClose()" class="actionBtn">Закрыть</button>
     </div>
   </div>
   <script src="main.js"></script>
-  <script src="js/runtime-fix-v0.1.4.js"></script>
+  <script src="js/runtime-stable-v0.2.0.js"></script>
 </body>
 </html>
