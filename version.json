@@ -1,17 +1,17 @@
 {
   "name": "GOART",
   "title": "Рабочий день в типографии",
-  "version": "0.1.3",
-  "status": "startup-fix",
+  "version": "0.1.4",
+  "status": "runtime-startup-fix",
   "date": "2026-06-13",
   "site": "https://sunpole.github.io/GOART/",
   "repository": "https://github.com/sunpole/GOART",
   "description": "Браузерная игра-симулятор рабочего дня в типографии на HTML, CSS и Vanilla JavaScript.",
   "changes": [
-    "Добавлен отдельный startup safety patch js/startup-fix-v0.1.3.js.",
-    "Патч подключён после main.js в index.html.",
-    "Исправляется падение resetGame() при отсутствии #player-name.",
-    "Версия v0.1.3 отображается в title страницы и шапке интерфейса.",
-    "Окно справки получает безопасную замену legendOpen() с кнопкой закрытия."
+    "Добавлен js/runtime-fix-v0.1.4.js.",
+    "Отключён старый window.onload из main.js, который мог запускать небезопасный resetGame().",
+    "Автозапуск игры перенесён в безопасный runtime patch.",
+    "index.html переключён с startup-fix-v0.1.3.js на runtime-fix-v0.1.4.js.",
+    "Версия v0.1.4 отображается в title страницы и шапке интерфейса."
   ]
 }
